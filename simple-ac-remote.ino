@@ -1,6 +1,16 @@
+//******************************************************************************
+// Simple AC Remote
+// Version 0.1 April 2017
+// Copyright 2017 Gutierrez PS
+// For details, see http://github.com/gutierrezps/simple-ac-remote
+// 
+// 
+//******************************************************************************
+
 #include <IRremote.h>
 #include <IRremoteInt.h>
 
+// Defined in IRremoteInt.h
 extern int MATCH(int measured, int desired);
 extern int MATCH_MARK(int measured_ticks, int desired_us);
 extern int MATCH_SPACE(int measured_ticks, int desired_us);
@@ -24,11 +34,11 @@ unsigned int g_raw[4][100] = {{0}, {0}, {0}, {0}};
 char g_raw_size[4] = {0};
 
 IRrecv g_ir_recv(g_pins.ir_sensor);
-IRsend g_ir_sender;      // LED IR conectado ao pino 3
+IRsend g_ir_sender;      // IR LED connected on pin 3
 
 decode_results g_ir_data;
 
-char g_status = 0;      // 0: desligado, 1-3: nível refrigeração
+char g_status = 0;      // 0: off, 1-3: cooling level
 char g_send = 0;
 
 void program()
@@ -36,7 +46,7 @@ void program()
     char current_code = 0, blink_status = 1, received = 0;
     unsigned long blink_timer = 0;
 
-    g_ir_recv.enableIRIn();        // habilita receptor IR
+    g_ir_recv.enableIRIn();
 
     while(current_code < 4)
     {
