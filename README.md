@@ -18,5 +18,13 @@ IR code programming is still in progress. Next step is to detect the protocol an
 * 12 - Level buton (`INPUT_PULLUP`)
 
 
+# Resources and other projects
+
+* [HVAC IR Control](https://github.com/r45635/HVAC-IR-Control)
+* [Cooking hacks IR Remote shield](https://www.cooking-hacks.com/documentation/tutorials/control-hvac-infrared-devices-from-the-internet-with-ir-remote/)
+* [VS1838B IR receiver module](http://arduino-kit.ru/userfiles/image/VS1838B_INFRARED_RECEIVER_MODULE.pdf)
+* [VS1838B datasheet (in english)](https://www.optimusdigital.ro/index.php?controller=attachment&id_attachment=4&usg=afqjcnh7fun0zdtnznv0ufaeth9sjdsgtg&sig2=t1sm5ow3vxetkff9hq2tsw) 
+
+
 # Copyright
 Copyright 2017 Gutierrez PS
