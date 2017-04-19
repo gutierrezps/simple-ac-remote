@@ -13,6 +13,7 @@ IR code programming is still in progress. Next step is to detect the protocol an
 * 4 - LED 1
 * 5 - LED 2
 * 6 - LED 3
+* 7 - Blink LED (on send)
 * 11 - Off button (`INPUT_PULLUP`)
 * 12 - Level buton (`INPUT_PULLUP`)
 
