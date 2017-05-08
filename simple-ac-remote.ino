@@ -10,90 +10,123 @@
 #include <IRremote.h>
 #include <IRremoteInt.h>
 
-const struct {
-    char button_level;
-    char button_off;
-    char led_1;
-    char led_2;
-    char led_3;
-    char led_blink;
-    char ir_sensor;
-} g_pins = {12, 11, 4, 5, 6, 7, 2};
+#include "IRData.hpp"
+#include "IRDecoder.hpp"
+#include "IRSender.hpp"
 
-unsigned int g_raw[4][100] = {{0}, {0}, {0}, {0}};      // stores raw timings
-char g_raw_size[4] = {0};
+const struct
+{
+    char buttonLevel;
+    char buttonOff;
+    char led1;
+    char led2;
+    char led3;
+    char ledBlink;
+    char irSensor;
+}
+gPins = {12, 11, 4, 5, 6, 7, 2};
 
-IRrecv g_ir_recv(g_pins.ir_sensor);
-IRsend g_ir_sender;      // IR LED connected on pin 3
+IRrecv gIRRecv(gPins.irSensor);
+IRsend gIRSender;      // IR LED connected on pin 3
 
-decode_results g_ir_data;
+decode_results gIrData;
 
-char g_status = 0;      // 0: off, 1-3: cooling level
-char g_send = 0;
+char gACLevel = 0;      // 0: off, 1-3: cooling level
+char gSendCode = 0;
+
+void program();
+void load();
+
+void setup()
+{
+    pinMode(gPins.irSensor, INPUT);
+    pinMode(gPins.led1, OUTPUT);
+    pinMode(gPins.led2, OUTPUT);
+    pinMode(gPins.led3, OUTPUT);
+    pinMode(gPins.ledBlink, OUTPUT);
+    pinMode(gPins.buttonOff, INPUT_PULLUP);
+    pinMode(gPins.buttonLevel, INPUT_PULLUP);
+
+    Serial.begin(115200);
+
+    //if(digitalRead(gPins.buttonLevel) == LOW)
+    {
+        Serial.println("Programming mode");
+        program();
+    }
+}
+
+void loop() {}
+
+
 
 void program()
 {
-    char current_code = 0, blink_status = 1, received = 0;
-    unsigned long blink_timer = 0;
+    char currentCode = 0, blinkStatus = 1, received = 0;
+    unsigned long blinkTimer = 0;
 
-    g_ir_recv.enableIRIn();
+    gIRRecv.enableIRIn();
 
-    while(current_code < 4)
+    while(currentCode < 4)
     {
-        if(g_ir_recv.decode(&g_ir_data))
-        {
-            received = 1;
-        }
+        if(gIRRecv.decode(&gIrData)) received = 1;
 
-        switch(current_code)
+        switch(currentCode)
         {
             case 0: 
-                digitalWrite(g_pins.led_1, blink_status ? LOW : HIGH);
-                digitalWrite(g_pins.led_2, blink_status ? HIGH : LOW);
-                digitalWrite(g_pins.led_3, blink_status ? LOW : HIGH);
+                digitalWrite(gPins.led1, blinkStatus ? LOW : HIGH);
+                digitalWrite(gPins.led2, blinkStatus ? HIGH : LOW);
+                digitalWrite(gPins.led3, blinkStatus ? LOW : HIGH);
                 break;
 
             case 3:
-                digitalWrite(g_pins.led_3, blink_status);
+                digitalWrite(gPins.led3, blinkStatus);
             case 2:
-                digitalWrite(g_pins.led_2, blink_status);
+                digitalWrite(gPins.led2, blinkStatus);
             case 1:
-                digitalWrite(g_pins.led_1, blink_status);
+                digitalWrite(gPins.led1, blinkStatus);
                 break;
         }
 
         if(received)
         {
-            Serial.print("code ");
-            Serial.print(current_code, DEC);
+            Serial.print("\ncode ");
+            Serial.print(currentCode, DEC);
             Serial.print(": ");
-            for(unsigned char i = 1; i < g_ir_data.rawlen; i++)
+
+            IRData data;
+
+            decodeIR(&gIrData, data, 1);
+
+            if(data.isValid)
             {
-                g_raw[current_code][i-1] = (unsigned int) g_ir_data.rawbuf[i]*USECPERTICK;
-
-                Serial.print(g_raw[current_code][i-1], DEC);
-                Serial.print(" ");
+                digitalWrite(gPins.ledBlink, HIGH);
+                sendIR(gIRSender, data);
+                digitalWrite(gPins.ledBlink, LOW);
+                currentCode++;
             }
-            Serial.println(" ");
+            else
+            {
+                Serial.println("UNKNOWN");
+                dumpRaw(&gIrData, 0);
+            }
 
-            g_raw_size[current_code] = g_ir_data.rawlen - 1;
-
-            g_ir_recv.resume(); // Receive the next value
+            gIRRecv.enableIRIn();
+            gIRRecv.resume(); // Receive the next value
             received = 0;
-            current_code++;
-            blink_timer = 0;
-            blink_status = 1;
+            blinkTimer = 0;
+            blinkStatus = 1;
 
-            digitalWrite(g_pins.led_1, LOW);
-            digitalWrite(g_pins.led_2, LOW);
-            digitalWrite(g_pins.led_3, LOW);
+            digitalWrite(gPins.led1, LOW);
+            digitalWrite(gPins.led2, LOW);
+            digitalWrite(gPins.led3, LOW);
         }
         else
         {
-            if(++blink_timer > 500)
+            if(++blinkTimer > 500)
             {
-                blink_status = blink_status ? 0 : 1;
-                blink_timer = 0;
+                blinkStatus = blinkStatus ? 0 : 1;
+                blinkTimer = 0;
             }
         }
 
@@ -102,26 +135,62 @@ void program()
 
     for(char i = 0; i <= 4; i++)
     {
-        digitalWrite(g_pins.led_1, i % 2);
-        digitalWrite(g_pins.led_2, i % 2);
-        digitalWrite(g_pins.led_3, i % 2);
+        digitalWrite(gPins.led1, i % 2);
+        digitalWrite(gPins.led2, i % 2);
+        digitalWrite(gPins.led3, i % 2);
         delay(100);
     }
+
+    //if(!save_error)
+    {
+        //EEPROM.write(0, 'p');
+    }
+}
+
+void load()
+{
+
+}
+
+
+/*
+void load()
+{
+    unsigned int addr = 1;
+    
+    for(char code = 0; code < 4; code++)
+    {
+        if(g_decode_ac.readFromEEPROM(addr))
+        {
+            g_decode_ac.dump();
+            g_decode_ac.copyValueTo(g_codes[code], 10);
+            g_codes_bits[code] = g_decode_ac.bits;
+
+            addr += g_decode_ac.valueLength() + 1;
+        }
+        else
+        {
+            Serial.println("load error");
+            return;
+        }
+    }
+
+    Serial.println("codes loaded");
 }
 
 void setup()
 {
-    pinMode(g_pins.ir_sensor, INPUT);
-    pinMode(g_pins.led_1, OUTPUT);
-    pinMode(g_pins.led_2, OUTPUT);
-    pinMode(g_pins.led_3, OUTPUT);
-    pinMode(g_pins.led_blink, OUTPUT);
-    pinMode(g_pins.button_off, INPUT_PULLUP);
-    pinMode(g_pins.button_level, INPUT_PULLUP);
+    pinMode(gPins.irSensor, INPUT);
+    pinMode(gPins.led1, OUTPUT);
+    pinMode(gPins.led2, OUTPUT);
+    pinMode(gPins.led3, OUTPUT);
+    pinMode(gPins.ledBlink, OUTPUT);
+    pinMode(gPins.buttonOff, INPUT_PULLUP);
+    pinMode(gPins.buttonLevel, INPUT_PULLUP);
 
     Serial.begin(115200);
 
-    if(digitalRead(g_pins.button_level) == LOW)
+    if(digitalRead(gPins.buttonLevel) == LOW)
     {
         Serial.println("Programming mode");
         program();
@@ -130,48 +199,49 @@ void setup()
 
 void loop()
 {
-    if(digitalRead(g_pins.button_level) == LOW)
+    if(digitalRead(gPins.buttonLevel) == LOW)
     {
         delay(100);
-        while(digitalRead(g_pins.button_level) == LOW);
+        while(digitalRead(gPins.buttonLevel) == LOW);
 
-        if(++g_status == 4) g_status = 1;
-        g_send = 1;
+        if(++gACLevel == 4) gACLevel = 1;
+        gSendCode = 1;
     }
 
-    if(digitalRead(g_pins.button_off) == LOW)
+    if(digitalRead(gPins.buttonOff) == LOW)
     {
         delay(100);
-        while(digitalRead(g_pins.button_off) == LOW);
-        g_status = 0;
-        g_send = 1;
+        while(digitalRead(gPins.buttonOff) == LOW);
+        gACLevel = 0;
+        gSendCode = 1;
     }
 
-    if(g_send)
+    if(gSendCode)
     {
         Serial.print("sending ");
-        Serial.println(g_status, DEC);
+        Serial.println(gACLevel, DEC);
 
-        digitalWrite(g_pins.led_1, LOW);
-        digitalWrite(g_pins.led_2, LOW);
-        digitalWrite(g_pins.led_3, LOW);
+        digitalWrite(gPins.led1, LOW);
+        digitalWrite(gPins.led2, LOW);
+        digitalWrite(gPins.led3, LOW);
 
-        switch(g_status)
+        switch(gACLevel)
         {
             case 3:
-                digitalWrite(g_pins.led_3, HIGH);
+                digitalWrite(gPins.led3, HIGH);
             case 2:
-                digitalWrite(g_pins.led_2, HIGH);
+                digitalWrite(gPins.led2, HIGH);
             case 1:
-                digitalWrite(g_pins.led_1, HIGH);
+                digitalWrite(gPins.led1, HIGH);
                 break;
         }
 
-        digitalWrite(g_pins.led_blink, HIGH);
-        g_ir_sender.sendRaw(g_raw[g_status], g_raw_size[g_status], 38);
+        digitalWrite(gPins.ledBlink, HIGH);
+        gIRSender.sendRaw(g_raw[gACLevel], g_raw_size[gACLevel], 38);
         delay(100);
-        digitalWrite(g_pins.led_blink, LOW);
+        digitalWrite(gPins.ledBlink, LOW);
         delay(400);
-        g_send = 0;
+        gSendCode = 0;
     }
 }
+*/
