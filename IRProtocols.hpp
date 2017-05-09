@@ -87,7 +87,7 @@ class IRProtocols : public Iterator<IRProtocol *>
         using Iterator<IRProtocol *>::IsDone;
         using Iterator<IRProtocol *>::Current;
 
-        IRProtocol * GetTiming(IRProtocol::Id i)
+        IRProtocol * GetProtocol(IRProtocol::Id i)
         {
             First();
             while(!IsDone())
@@ -95,11 +95,11 @@ class IRProtocols : public Iterator<IRProtocol *>
                 if(Current()->GetId() == i) return Current();
                 Next();
             }
-            return nullptr;
+            return NULL;
         }
 };
 
-IRProtocols gIrTimings;
+IRProtocols g_irProtocols;
 
 
 

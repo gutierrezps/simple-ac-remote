@@ -91,12 +91,12 @@ bool decodeIR(decode_results *results, IRData &data, char debug)
 {
     data.isValid = false;
 
-    gIrTimings.First();
+    g_irProtocols.First();
     IRProtocol *protocol = nullptr;
 
-    while(!gIrTimings.IsDone())
+    while(!g_irProtocols.IsDone())
     {
-        protocol = gIrTimings.Current();
+        protocol = g_irProtocols.Current();
 
         if(debug)
         {
@@ -112,7 +112,7 @@ bool decodeIR(decode_results *results, IRData &data, char debug)
             break;
         }
 
-        gIrTimings.Next();
+        g_irProtocols.Next();
     }
 
     return data.isValid;

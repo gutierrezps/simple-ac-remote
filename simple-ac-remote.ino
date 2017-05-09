@@ -31,7 +31,9 @@ IRsend g_irSender;      // IR LED connected on pin 3
 
 char g_ACLevel = 0;      // 0: off, 1-3: cooling level
 char g_sendCode = 0;
-char g_g_remoteQty = 1;
+char g_remoteQty = 1;
+
+IRData * g_codes[2][4];
 
 void program();
 void load();
@@ -48,24 +50,82 @@ void setup()
 
     Serial.begin(115200);
 
-    //if(digitalRead(g_pins.buttonLevel) == LOW)
+    if(digitalRead(g_pins.buttonOff) == LOW)
     {
-        Serial.println("Programming mode");
-        program();
+        EEPROM.write(0, 0);
+        delay(100);
+        while(digitalRead(g_pins.buttonOff) == LOW) delay(10);
+        delay(100);
     }
+
+    if(EEPROM.read(0) != 'p') program();
+
+    load();
 }
 
-void loop() {}
+void loop()
+{
+    if(digitalRead(g_pins.buttonLevel) == LOW)
+    {
+        delay(100);
+        while(digitalRead(g_pins.buttonLevel) == LOW);
+
+        if(++g_ACLevel == 4) g_ACLevel = 1;
+        g_sendCode = 1;
+    }
+
+    if(digitalRead(g_pins.buttonOff) == LOW)
+    {
+        delay(100);
+        while(digitalRead(g_pins.buttonOff) == LOW);
+        g_ACLevel = 0;
+        g_sendCode = 1;
+    }
+
+    if(g_sendCode)
+    {
+        Serial.print("sending ");
+        Serial.println(g_ACLevel, DEC);
+
+        digitalWrite(g_pins.led1, LOW);
+        digitalWrite(g_pins.led2, LOW);
+        digitalWrite(g_pins.led3, LOW);
+
+        switch(g_ACLevel)
+        {
+            case 3:
+                digitalWrite(g_pins.led3, HIGH);
+            case 2:
+                digitalWrite(g_pins.led2, HIGH);
+            case 1:
+                digitalWrite(g_pins.led1, HIGH);
+                break;
+        }
+
+        digitalWrite(g_pins.ledBlink, HIGH);
+        
+        for(char remote = 0; remote < g_remoteQty; ++remote)
+        {
+            // send
+        }
+
+        delay(100);
+        digitalWrite(g_pins.ledBlink, LOW);
+        delay(400);
+        g_sendCode = 0;
+    }
+}
 
 
 
 void program()
 {
-    char currentCode = 0, blinkStatus = 1, received = 0, saveError = 0;
+    char currentCode = 0, blinkStatus = 1, received = 0, saveOk = 0;
+    uint16_t eepromAddr = 1;
     unsigned long blinkTimer = 0;
     decode_results irRawData;
-    
-    while(digitalRead(g_pins.buttonOff) == LOW) delay(10);
+
+    Serial.println("\nProgramming mode");
 
     digitalWrite(g_pins.led1, HIGH);
 
@@ -80,6 +140,8 @@ void program()
             g_remoteQty = (g_remoteQty == 1) ? 2 : 1;
         }
     } while(digitalRead(g_pins.buttonLevel) == HIGH);
+
+    EEPROM.write(eepromAddr++, g_remoteQty);
 
     g_irRecv.enableIRIn();
 
@@ -142,6 +204,12 @@ void program()
                 delay(50);
                 digitalWrite(g_pins.ledBlink, LOW);
 
+                saveOk = data.WriteToEEPROM(eepromAddr);
+
+                if(!saveOk) break;
+
+                eepromAddr += data.SizeOnEEPROM();
+
                 currentCode++;
             }
             else
@@ -164,6 +232,8 @@ void program()
             digitalWrite(g_pins.led2, LOW);
             digitalWrite(g_pins.led3, LOW);
         }
+
+        if(!saveOk) break;
     }
 
     
@@ -176,107 +246,36 @@ void program()
         delay(100);
     }
 
-    //if(!save_error)
-    {
-        //EEPROM.write(0, 'p');
-    }
+    if(saveOk) EEPROM.write(0, 'p');
+    else Serial.println("eeprom save error");
 }
 
 void load()
 {
+    IRData data;
+    uint16_t eepromAddr = 2;
+    g_remoteQty = EEPROM.read(1);
 
-}
-
-
-/*
-void load()
-{
-    unsigned int addr = 1;
-    
-    for(char code = 0; code < 4; code++)
+    for(char remote = 0; remote < g_remoteQty; ++remote)
     {
-        if(g_decode_ac.readFromEEPROM(addr))
+        for(char code = 0; code < 4; ++code)
         {
-            g_decode_ac.dump();
-            g_decode_ac.copyValueTo(g_codes[code], 10);
-            g_codes_bits[code] = g_decode_ac.bits;
+            data.ReadFromEEPROM(eepromAddr);
 
-            addr += g_decode_ac.valueLength() + 1;
-        }
-        else
-        {
-            Serial.println("load error");
-            return;
+            if(!data.isValid)
+            {
+                Serial.println("eeprom load error");
+                return;
+            }
+
+            g_codes[remote][code] = new IRData();
+            (*g_codes[remote][code]) = data;
+
+            eepromAddr += data.SizeOnEEPROM();
         }
     }
 
-    Serial.println("codes loaded");
+    Serial.println("load done");
 }
 
-void setup()
-{
-    pinMode(g_pins.irSensor, INPUT);
-    pinMode(g_pins.led1, OUTPUT);
-    pinMode(g_pins.led2, OUTPUT);
-    pinMode(g_pins.led3, OUTPUT);
-    pinMode(g_pins.ledBlink, OUTPUT);
-    pinMode(g_pins.buttonOff, INPUT_PULLUP);
-    pinMode(g_pins.buttonLevel, INPUT_PULLUP);
 
-    Serial.begin(115200);
-
-    if(digitalRead(g_pins.buttonLevel) == LOW)
-    {
-        Serial.println("Programming mode");
-        program();
-    }
-}
-
-void loop()
-{
-    if(digitalRead(g_pins.buttonLevel) == LOW)
-    {
-        delay(100);
-        while(digitalRead(g_pins.buttonLevel) == LOW);
-
-        if(++g_ACLevel == 4) g_ACLevel = 1;
-        g_sendCode = 1;
-    }
-
-    if(digitalRead(g_pins.buttonOff) == LOW)
-    {
-        delay(100);
-        while(digitalRead(g_pins.buttonOff) == LOW);
-        g_ACLevel = 0;
-        g_sendCode = 1;
-    }
-
-    if(g_sendCode)
-    {
-        Serial.print("sending ");
-        Serial.println(g_ACLevel, DEC);
-
-        digitalWrite(g_pins.led1, LOW);
-        digitalWrite(g_pins.led2, LOW);
-        digitalWrite(g_pins.led3, LOW);
-
-        switch(g_ACLevel)
-        {
-            case 3:
-                digitalWrite(g_pins.led3, HIGH);
-            case 2:
-                digitalWrite(g_pins.led2, HIGH);
-            case 1:
-                digitalWrite(g_pins.led1, HIGH);
-                break;
-        }
-
-        digitalWrite(g_pins.ledBlink, HIGH);
-        g_irSender.sendRaw(g_raw[g_ACLevel], g_raw_size[g_ACLevel], 38);
-        delay(100);
-        digitalWrite(g_pins.ledBlink, LOW);
-        delay(400);
-        g_sendCode = 0;
-    }
-}
-*/
