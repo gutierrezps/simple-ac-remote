@@ -101,16 +101,16 @@ void loop()
                 digitalWrite(g_pins.led1, HIGH);
                 break;
         }
-
-        digitalWrite(g_pins.ledBlink, HIGH);
         
         for(char remote = 0; remote < g_remoteQty; ++remote)
         {
-            // send
+            digitalWrite(g_pins.ledBlink, HIGH);
+            sendIR(g_irSender, (*g_codes[remote][g_ACLevel]));
+            delay(100);
+            digitalWrite(g_pins.ledBlink, LOW);
+            delay(50);
         }
-
-        delay(100);
-        digitalWrite(g_pins.ledBlink, LOW);
+        
         delay(400);
         g_sendCode = 0;
     }
