@@ -29,7 +29,7 @@ class IRData
 
         char WriteToEEPROM(uint16_t address)
         {
-            if(Length() == 0) return 0;
+            if(Length() == 0 || !isValid) return 0;
 
             EEPROM.write(address, nBits);
             for(uint8_t i = 0; i < Length(); i++)
@@ -53,6 +53,17 @@ class IRData
             }
 
             return 1;
+        }
+
+        void operator = (const IRData &copyFrom)
+        {
+            protocol = copyFrom.protocol;
+            for(char i = 0; i < IRDATA_MAX_VALUE_SIZE; ++i)
+            {
+                data[i] = copyFrom.data[i];
+            }
+            nBits = copyFrom.nBits;
+            isValid = copyFrom.isValid;
         }
 };
 
