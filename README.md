@@ -4,7 +4,6 @@ This is a stripped-down programmable AC remote control made with Arduino Pro Min
 
 The remote has two buttons and three LEDs. One button turns off the AC unit, and the other sets the cooling level (1, 2 or 3), shown by the LEDs.
 
-IR code programming is still in progress. Next step is to detect the protocol and then store the data bytes in EEPROM memory.
 
 ### Arduino Pins Assignment
 
@@ -13,18 +12,34 @@ IR code programming is still in progress. Next step is to detect the protocol an
 * 4 - LED 1
 * 5 - LED 2
 * 6 - LED 3
-* 7 - Blink LED (on send)
+* 7 - Blink LED (on send and for other info)
 * 11 - Off button (`INPUT_PULLUP`)
 * 12 - Level buton (`INPUT_PULLUP`)
 
 
-# Resources and other projects
+## How it's done
+
+Instead of decoding specific remote control data, like number of bits, function of each bit, checksum etc, this project aims to reproduce whatever command is presented with a timing decode/encode approach, i.e. raw data is transformed to bits by association with a generic protocol, defined by some timing paratemers.
+
+Once the decode process is done, the data bits are stored on Arduino's EEPROM memory, and then loaded on next system boot.
+
+
+## File structure
+
+``IRData.hpp`` defines a class that holds an IR data packet, consisting of a protocol and the decoded data bits.
+
+``IRProtocols.hpp`` defines an IR protocol class with its timings and arbitrary ID number and name; and also defines a storage class for all protocols used in this project.
+
+``IRDecoder.hpp`` and ``IRSender.hpp`` defines functions for decoding and encoding of IR data. The decode process compares the raw data provided by IRremote library with the available protocols.
+
+
+## Resources and other projects
 
 * [HVAC IR Control](https://github.com/r45635/HVAC-IR-Control)
 * [Cooking hacks IR Remote shield](https://www.cooking-hacks.com/documentation/tutorials/control-hvac-infrared-devices-from-the-internet-with-ir-remote/)
 * [VS1838B IR receiver module](http://arduino-kit.ru/userfiles/image/VS1838B_INFRARED_RECEIVER_MODULE.pdf)
-* [VS1838B datasheet (in english)](https://www.optimusdigital.ro/index.php?controller=attachment&id_attachment=4&usg=afqjcnh7fun0zdtnznv0ufaeth9sjdsgtg&sig2=t1sm5ow3vxetkff9hq2tsw) 
+* [VS1838B datasheet](https://www.optimusdigital.ro/index.php?controller=attachment&id_attachment=4&usg=afqjcnh7fun0zdtnznv0ufaeth9sjdsgtg&sig2=t1sm5ow3vxetkff9hq2tsw) 
 
 
-# Copyright
+## Copyright
 Copyright 2017 Gutierrez PS
