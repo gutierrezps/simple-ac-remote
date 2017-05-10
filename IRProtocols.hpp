@@ -4,24 +4,24 @@
 #include <Arduino.h>
 #include "Iterator.hpp"
 
+/**
+ * Encapsulates protocol timings.
+ *
+ * To add a new protocol, add a new entry on enum Id (and on Name member),
+ * and create it on IRProtocols below
+ */
 class IRProtocol
 {
     public:
+
+        /**
+         * Arbitrary ids (and names) for each protocol
+         */
         enum Id : char
         {
-            NEC1 = 1,
-            Elbrus
+            NEC1 = 1,   // timings are the same of NEC
+            Elbrus      // first AC unit with those timings
         };
-
-    private:
-        Id  m_id;
-        uint16_t m_headerMark;
-        uint16_t m_headerSpace;
-        uint16_t m_bitMark;
-        uint16_t m_bitZeroSpace;
-        uint16_t m_bitOneSpace;
-
-    public:
 
         IRProtocol(Id i, uint16_t hm, uint16_t hs, uint16_t bm, uint16_t b0s, uint16_t b1s)
         {
@@ -51,8 +51,22 @@ class IRProtocol
             }
         }
 
+    private:
+        Id  m_id;
+        uint16_t m_headerMark;
+        uint16_t m_headerSpace;
+        uint16_t m_bitMark;
+        uint16_t m_bitZeroSpace;
+        uint16_t m_bitOneSpace;
+
 };
 
+
+/**
+ * Collection of protocols to encode and decode IRData.
+ *
+ * Add a new protocol on class constructor
+ */
 class IRProtocols : public Iterator<IRProtocol *>
 {
     private:
@@ -87,18 +101,29 @@ class IRProtocols : public Iterator<IRProtocol *>
         using Iterator<IRProtocol *>::IsDone;
         using Iterator<IRProtocol *>::Current;
 
-        IRProtocol * GetProtocol(IRProtocol::Id i)
+
+        /**
+         * Find protocol by its id.
+         * 
+         * @param   id  to look for
+         * 
+         * @return  null if not found
+         */
+        IRProtocol * GetProtocol(IRProtocol::Id id)
         {
             First();
             while(!IsDone())
             {
-                if(Current()->GetId() == i) return Current();
+                if(Current()->GetId() == id) return Current();
                 Next();
             }
             return NULL;
         }
 };
 
+/**
+ * Global instance of IRProtocols
+ */
 IRProtocols g_irProtocols;
 
 

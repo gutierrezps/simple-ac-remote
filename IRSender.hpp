@@ -5,12 +5,20 @@
 #include "IRProtocols.hpp"
 #include "IRData.hpp"
 
+
+/**
+ * Sends infrared data with given IRsend. Based on sendNEC
+ * function from IRremote library.
+ * 
+ * @param   irSender    sender object from IRremote library
+ * @param   irData      to be sent
+ */
 void sendIR(IRsend &irSender, IRData &irData)
 {
     // Set IR carrier frequency
     irSender.enableIROut(38);
 
-    if(!irData.isValid || irData.protocol == nullptr) return;
+    if(!irData.isValid || irData.protocol == NULL) return;
 
     // Header
     irSender.mark(irData.protocol->HeaderMark());
@@ -18,16 +26,16 @@ void sendIR(IRsend &irSender, IRData &irData)
 
     for(uint8_t iBit = 0; iBit < irData.nBits; iBit++)
     {
-        // MSb in data was received first, see decode_NEC_AC
-        //         
+        // Same for both bit values
+        irSender.mark(irData.protocol->BitMark());
+
+        // Sends MSb first
         if( irData.data[(int)iBit/8] & ( 1 << (7 - (iBit % 8)) ) )
         {
-            irSender.mark(irData.protocol->BitMark());
             irSender.space(irData.protocol->BitOneSpace());
         }
         else
         {
-            irSender.mark(irData.protocol->BitMark());
             irSender.space(irData.protocol->BitZeroSpace());
         }
     }
