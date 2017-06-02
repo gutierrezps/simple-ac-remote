@@ -1,6 +1,11 @@
 #ifndef Iterator_hpp
 #define Iterator_hpp
 
+/**
+ * Simple iterator template class.
+ *
+ * First and Next methods must be implemented by concrete class.
+ */
 template <class Item> class Iterator
 {
 public:

@@ -23,11 +23,24 @@ class IRData
 
         uint8_t MaxSize() { return IRDATA_MAX_VALUE_SIZE; }
 
+        /**
+         * @return  data array length in bytes
+         */
         uint8_t Length()
         {
             return nBits/8 + ( nBits % 8 > 0 );
         }
 
+        /**
+         * Writes the data packet on Arduino EEPROM if it's valid.
+         *
+         * First byte is nBits
+         * Second byte is protocol ID
+         * Next n bytes are data
+         * 
+         * @param   address     starting address
+         * @return  0 on failure
+         */
         char WriteToEEPROM(uint16_t address)
         {
             if(Length() == 0 || !isValid) return 0;
@@ -43,6 +56,12 @@ class IRData
             return 1;
         }
 
+        /**
+         * Reads the data packet from EEPROM.
+         * 
+         * @param   address     starting position
+         * @return  0 if incorrect size or unknown protocol
+         */
         char ReadFromEEPROM(uint16_t address)
         {
             isValid = false;
@@ -66,12 +85,18 @@ class IRData
             return 1;
         }
 
+        /**
+         * @see     WriteToEEPROM
+         * @return  number of bytes occupied on EEPROM
+         */
         char SizeOnEEPROM()
         {
-            // one for nBits, another for protocol id
             return Length() + 2;
         }
 
+        /**
+         * Copies data from other packet
+         */
         void operator = (const IRData &copyFrom)
         {
             protocol = copyFrom.protocol;

@@ -1,10 +1,10 @@
 //******************************************************************************
 // Simple AC Remote
-// Version 0.2 May 2017
+//
 // Copyright 2017 Gutierrez PS
-// For details, see http://github.com/gutierrezps/simple-ac-remote
-// 
-// 
+//
+// http://github.com/gutierrezps/simple-ac-remote
+//  
 //******************************************************************************
 
 #include <IRremote.h>
@@ -27,9 +27,9 @@ const struct
 g_pins = {12, 11, 4, 5, 6, 7, 2};
 
 IRrecv g_irRecv(g_pins.irSensor);
-IRsend g_irSender;      // IR LED connected on pin 3
+IRsend g_irSender;                  // IR LED connected on pin 3
 
-char g_ACLevel = 0;      // 0: off, 1-3: cooling level
+char g_ACLevel = 0;                 // 0: off, 1-3: cooling level
 char g_sendCode = 0;
 char g_remoteQty = 1;
 
@@ -50,11 +50,15 @@ void setup()
 
     Serial.begin(115200);
 
+    // Enters programming routine if off button is
+    // held on startup
     if(digitalRead(g_pins.buttonOff) == LOW)
     {
+        digitalWrite(g_pins.ledBlink, HIGH);
         EEPROM.write(0, 0);
         delay(100);
         while(digitalRead(g_pins.buttonOff) == LOW) delay(10);
+        digitalWrite(g_pins.ledBlink, LOW);
         delay(100);
     }
 
@@ -117,7 +121,15 @@ void loop()
 }
 
 
-
+/**
+ * Saves codes on EEPROM memory.
+ *
+ * First step is to define how many remotes will be stored.
+ *
+ * Then, for each remote, user must send four commands:
+ * turn off, level 1 (hotter), level 2 and level 3 (colder).
+ *
+ */
 void program()
 {
     char currentCode = 0, blinkStatus = 1, received = 0, saveOk = 0;
@@ -125,7 +137,10 @@ void program()
     unsigned long blinkTimer = 0;
     decode_results irRawData;
 
-    Serial.println("\nProgramming mode");
+    Serial.println("\nProgramming routine");
+
+
+    // Set how many remotes
 
     digitalWrite(g_pins.led1, HIGH);
 
@@ -143,6 +158,9 @@ void program()
 
     EEPROM.write(eepromAddr++, g_remoteQty);
 
+
+    // Decode and save each remote
+
     g_irRecv.enableIRIn();
 
     for(char remote = 0; remote < g_remoteQty; ++remote)
@@ -153,6 +171,8 @@ void program()
         while(currentCode < 4)
         {
             if(g_irRecv.decode(&irRawData)) received = 1;
+
+            // display code being programmed
 
             switch(currentCode)
             {
@@ -191,11 +211,8 @@ void program()
 
             decodeIR(&irRawData, data, 1);
 
-            if(data.isValid)
+            if(data.isValid)    // i.e. known protocol
             {
-                //digitalWrite(g_pins.ledBlink, HIGH);
-                //sendIR(g_irSender, data);
-                //digitalWrite(g_pins.ledBlink, LOW);
                 digitalWrite(g_pins.ledBlink, HIGH);
                 delay(50);
                 digitalWrite(g_pins.ledBlink, LOW);
@@ -222,8 +239,7 @@ void program()
                 digitalWrite(g_pins.ledBlink, LOW);
             }
 
-            g_irRecv.enableIRIn();
-            g_irRecv.resume(); // Receive the next value
+            g_irRecv.resume();      // get another code
             received = 0;
             blinkTimer = 0;
             blinkStatus = 1;
@@ -237,7 +253,7 @@ void program()
     }
 
     
-    // blink level leds twice
+    // blink level leds twice - end of programming
     for(char i = 0; i <= 4; i++)
     {
         digitalWrite(g_pins.led1, i % 2);
@@ -250,6 +266,14 @@ void program()
     else Serial.println("eeprom save error");
 }
 
+
+/**
+ * Load programmed codes from EEPROM.
+ * 
+ * byte on EEPROM[1] is the number of remotes programmed
+ *
+ * @see IRData::ReadFromEEPROM
+ */
 void load()
 {
     IRData data;
@@ -269,7 +293,7 @@ void load()
             }
 
             g_codes[remote][code] = new IRData();
-            (*g_codes[remote][code]) = data;
+            (*g_codes[remote][code]) = data;        // copy data read to global array
 
             eepromAddr += data.SizeOnEEPROM();
         }
@@ -277,5 +301,3 @@ void load()
 
     Serial.println("load done");
 }
-
-

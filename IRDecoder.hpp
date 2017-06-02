@@ -5,17 +5,29 @@
 #include "IRProtocols.hpp"
 #include "IRData.hpp"
 
-
+/**
+ * Tries to decode the raw data by ckecking its timings against
+ * a certain protocol.
+ *
+ * @see     IRProtocol class
+ * 
+ * @param   results     obtained from IRremote library
+ * @param   irData      destination data packet
+ * @param   protocol
+ * @param   debug       if 1, prints debug info
+ * 
+ * @return  true if raw data match given protocol
+ */
 bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, char debug)
 {
     uint8_t offset = 1;     // Skip initial space
-    uint8_t nBits = 0;     // # of bits received (mark-space pairs)
+    uint8_t nBits = 0;      // # of bits received (mark-space pairs)
     uint8_t rawLength = results->rawlen;
     unsigned char iData = 0;
 
     if(rawLength <= 4) return false;    // not sure if this could happen
     
-    // Initial mark and space - please notice offset++
+    // checks initial mark and space - please notice offset++
     if( !MATCH_MARK(results->rawbuf[offset++], protocol->HeaderMark())
         || !MATCH_SPACE(results->rawbuf[offset++], protocol->HeaderSpace())
         )
@@ -24,14 +36,15 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
         return false;
     }
 
-    // Ignoring start space, header mark and space, and last mark
+    // ignores start space, header mark and space, and last mark
     nBits = (results->rawlen - 4)/2;
     if(nBits > irData.MaxSize() * 8)
     {
-        Serial.println("tryDecode overflow");
+        Serial.println("tryDecodeIR overflow");
         return false;
     }
 
+    // tries to decode each bit
     for(uint8_t iBit = 0; iBit < nBits; iBit++)
     {
         iData = iBit / 8;
@@ -48,6 +61,7 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
             }
             return false;
         }
+
         offset++;
 
         if(MATCH_SPACE(results->rawbuf[offset], protocol->BitOneSpace()))
@@ -73,7 +87,7 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
         offset++;
     }
 
-    // align left last bits on last byte
+    // aligns left last bits on last data byte
     if(nBits % 8 > 0)
     {
         irData.data[(int)nBits/8] <<= 8 - (nBits % 8);
@@ -87,12 +101,26 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
 }
 
 
+/**
+ * Tries to decode the raw data by ckecking its timings against all
+ * available protocols.
+ *
+ * @see     IRProtocols class
+ * 
+ * @param   results     raw data
+ * @param   data        destination data packet
+ * @param   debug       if 1, prints debug info
+ * 
+ * @return  true if a matching protocol was found
+ */
 bool decodeIR(decode_results *results, IRData &data, char debug)
 {
+    IRProtocol *protocol = nullptr;
+
     data.isValid = false;
 
+    // iterates over all protocols
     g_irProtocols.First();
-    IRProtocol *protocol = nullptr;
 
     while(!g_irProtocols.IsDone())
     {
@@ -118,7 +146,13 @@ bool decodeIR(decode_results *results, IRData &data, char debug)
     return data.isValid;
 }
 
-
+/**
+ * Prints raw data on Serial. Based on IRrevcDump example from
+ * IRremote library.
+ * 
+ * @param   results     raw data
+ * @param   skip_lines  if 1, prints each timing on a new line
+ */
 void dumpRaw(decode_results *results, char skip_lines)
 {
     for(int i = 1; i < results->rawlen; i++) {
