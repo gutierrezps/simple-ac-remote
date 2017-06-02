@@ -9,8 +9,10 @@ class IRProtocol
     public:
         enum Id : char
         {
-            NEC1 = 1,
-            Elbrus
+            Junco = 1,
+            Yawl,
+            Draftee,
+            Ampul
         };
 
     private:
@@ -45,8 +47,10 @@ class IRProtocol
         {
             switch(m_id)
             {
-                case NEC1: return String(F("NEC-1"));
-                case Elbrus: return String(F("Elbrus"));
+                case Junco: return String(F("Junco"));
+                case Yawl: return String(F("Yawl"));
+                case Draftee: return String(F("Draftee"));
+                case Ampul: return String(F("Ampul"));
                 default: return String(F("Unknown"));
             }
         }
@@ -63,8 +67,10 @@ class IRProtocols : public Iterator<IRProtocol *>
         {
             m_count = 0;     // from Iterator
 
-            m_protocols[m_count++] = new IRProtocol(IRProtocol::NEC1, 9000, 4500, 560, 600, 1690);
-            m_protocols[m_count++] = new IRProtocol(IRProtocol::Elbrus, 3400, 1650, 425, 425, 1250);
+            m_protocols[m_count++] = new IRProtocol(IRProtocol::Junco, 9000, 4500, 560, 600, 1690);
+            m_protocols[m_count++] = new IRProtocol(IRProtocol::Yawl, 3400, 1650, 425, 425, 1250);
+            m_protocols[m_count++] = new IRProtocol(IRProtocol::Draftee, 500, 1700, 450, 650, 1700);
+            m_protocols[m_count++] = new IRProtocol(IRProtocol::Ampul, 4400, 4400, 500, 600, 1650);
         }
 
         void First()        // from Iterator
