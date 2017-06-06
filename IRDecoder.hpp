@@ -128,8 +128,9 @@ bool decodeIR(decode_results *results, IRData &data, char debug)
 
         if(debug)
         {
-            Serial.print("\nTRYING ");
-            Serial.println(protocol->Name());
+            Serial.print("Trying ");
+            Serial.print(protocol->Name());
+            Serial.print(": ");
         }
 
         tryDecodeIR(results, data, protocol, debug);

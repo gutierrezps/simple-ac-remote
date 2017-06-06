@@ -13,6 +13,7 @@
 #include "IRData.hpp"
 #include "IRDecoder.hpp"
 #include "IRSender.hpp"
+#include "IRRawAnalyzer.hpp"
 
 const struct
 {
@@ -37,6 +38,7 @@ IRData * g_codes[2][4];
 
 void program();
 void load();
+void dumper();
 
 void setup()
 {
@@ -49,6 +51,8 @@ void setup()
     pinMode(g_pins.buttonLevel, INPUT_PULLUP);
 
     Serial.begin(115200);
+
+    dumper();
 
     // Enters programming routine if off button is
     // held on startup
@@ -300,4 +304,67 @@ void load()
     }
 
     Serial.println("load done");
+}
+
+
+void dumper()
+{
+    char blinkStatus = 1, received = 0;
+    unsigned long blinkTimer = 0;
+    decode_results irRawData;
+
+    Serial.println("dumper mode");
+
+    g_irRecv.enableIRIn();
+
+    while(1)
+    {
+        IRData data;
+
+        if(g_irRecv.decode(&irRawData)) received = 1;
+
+        digitalWrite(g_pins.led1, blinkStatus);
+
+        if(!received)
+        {
+            if(++blinkTimer > 500)
+            {
+                blinkStatus = blinkStatus ? 0 : 1;
+                blinkTimer = 0;
+            }
+
+            delay(1);
+            continue;   // return to loop beginning
+        }
+
+        dumpRaw(&irRawData, 0);
+        analyze(&irRawData);
+        decodeIR(&irRawData, data, 1);
+        
+
+        if(data.isValid)    // i.e. known protocol
+        {
+            digitalWrite(g_pins.ledBlink, HIGH);
+            delay(50);
+            digitalWrite(g_pins.ledBlink, LOW);
+            delay(50);
+            digitalWrite(g_pins.ledBlink, HIGH);
+            delay(50);
+            digitalWrite(g_pins.ledBlink, LOW);
+        }
+        else
+        {
+            digitalWrite(g_pins.ledBlink, HIGH);
+            delay(500);
+            digitalWrite(g_pins.ledBlink, LOW);
+        }
+
+        g_irRecv.resume();      // get another code
+        received = 0;
+        blinkTimer = 0;
+        blinkStatus = 1;
+
+        digitalWrite(g_pins.led1, LOW);
+    }
+
 }
