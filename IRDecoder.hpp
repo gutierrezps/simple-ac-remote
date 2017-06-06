@@ -156,7 +156,7 @@ bool decodeIR(decode_results *results, IRData &data, char debug)
  */
 void dumpRaw(decode_results *results, char skip_lines)
 {
-    for(int i = 1; i < results->rawlen; i++) {
+    for(int i = 0; i < results->rawlen; i++) {
         //Serial.print("[");
         //Serial.print(i);
         //Serial.print("]");

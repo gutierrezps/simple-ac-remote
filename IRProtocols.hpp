@@ -83,7 +83,7 @@ class IRProtocols : public Iterator<IRProtocol *>
 
             m_protocols[m_count++] = new IRProtocol(IRProtocol::Junco, 9000, 4500, 560, 600, 1690);
             m_protocols[m_count++] = new IRProtocol(IRProtocol::Yawl, 3400, 1650, 425, 425, 1250);
-            m_protocols[m_count++] = new IRProtocol(IRProtocol::Draftee, 500, 1700, 450, 650, 1700);
+            m_protocols[m_count++] = new IRProtocol(IRProtocol::Draftee, 550, 1650, 550, 550, 1650);
             m_protocols[m_count++] = new IRProtocol(IRProtocol::Ampul, 4400, 4400, 500, 600, 1650);
         }
 
