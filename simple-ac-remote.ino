@@ -52,7 +52,7 @@ void setup()
 
     Serial.begin(115200);
 
-    dumper();
+    //dumper();
 
     // Enters programming routine if off button is
     // held on startup

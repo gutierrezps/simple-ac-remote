@@ -72,6 +72,21 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
         {
             irData.data[iData] = (irData.data[iData] << 1);
         }
+        else if(protocol->HasTrail() && (offset == rawLength - 2 || offset == rawLength - 1))
+        {
+            if( ( offset == rawLength - 2 && !MATCH_SPACE(results->rawbuf[offset], protocol->TrailSpace()) )
+                || (offset == rawLength - 1 && !MATCH_MARK(results->rawbuf[offset], protocol->TrailMark()))
+                )
+            {
+                if(debug)
+                {
+                    Serial.print("trail mismatch - [");
+                    Serial.print(offset);
+                    Serial.print("]");
+                    Serial.println((unsigned long) results->rawbuf[offset]*USECPERTICK, DEC);
+                }
+            }
+        }
         else
         {
             if(debug)
@@ -156,7 +171,7 @@ bool decodeIR(decode_results *results, IRData &data, char debug)
  */
 void dumpRaw(decode_results *results, char skip_lines)
 {
-    for(int i = 0; i < results->rawlen; i++) {
+    for(int i = 1; i < results->rawlen; i++) {
         //Serial.print("[");
         //Serial.print(i);
         //Serial.print("]");

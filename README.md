@@ -33,6 +33,11 @@ Once the decode process is done, the data bits are stored on Arduino's EEPROM me
 ``IRDecoder.hpp`` and ``IRSender.hpp`` defines functions for decoding and encoding of IR data. The decode process compares the raw data provided by IRremote library with the available protocols.
 
 
+## Notes
+* On file ``IRremoteInt.h``, change ``RAWBUF`` to 300, in order to capture longer packets.
+* On file ``IRremoteInt.h``, change ``_GAP`` to 10000, in order to capture shorter headers.
+
+
 ## Resources and other projects
 
 * [HVAC IR Control](https://github.com/r45635/HVAC-IR-Control)
