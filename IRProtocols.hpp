@@ -44,25 +44,27 @@ class IRProtocol
             : IRProtocol(i, headerMark, headerSpace,
                             bitMark, bitZeroSpace, bitOneSpace, 0, 0) {};
 
-        Id GetId() { return m_id; };
-        uint16_t HeaderMark() { return m_headerMark; }
-        uint16_t HeaderSpace() { return m_headerSpace; }
-        uint16_t BitMark() { return m_bitMark; }
+        Id GetId()              { return m_id; };
+        uint16_t HeaderMark()   { return m_headerMark; }
+        uint16_t HeaderSpace()  { return m_headerSpace; }
+        uint16_t BitMark()      { return m_bitMark; }
         uint16_t BitZeroSpace() { return m_bitZeroSpace; }
-        uint16_t BitOneSpace() { return m_bitOneSpace; }
-        uint16_t TrailSpace() { return m_trailSpace; }
+        uint16_t BitOneSpace()  { return m_bitOneSpace; }
+        uint16_t TrailSpace()   { return m_trailSpace; }
+        uint16_t RepeatSpace()  { return m_repeatSpace; }
 
-        bool HasTrail() { return m_trailSpace > 0; }
+        bool HasTrail()     { return m_trailSpace > 0; }
+        bool IsRepeated()   { return m_repeatSpace > 0; }
 
         String Name()
         {
             switch(m_id)
             {
-                case Junco: return String(F("Junco"));
-                case Yawl: return String(F("Yawl"));
-                case Draftee: return String(F("Draftee"));
-                case Ampul: return String(F("Ampul"));
-                default: return String(F("Unknown"));
+                case Junco:     return String(F("Junco"));
+                case Yawl:      return String(F("Yawl"));
+                case Draftee:   return String(F("Draftee"));
+                case Ampul:     return String(F("Ampul"));
+                default:        return String(F("Unknown"));
             }
         }
 
@@ -93,10 +95,21 @@ class IRProtocols : public Iterator<IRProtocol *>
         {
             m_count = 0;     // from Iterator
 
-            m_protocols[m_count++] = new IRProtocol(IRProtocol::Junco, 9000, 4500, 560, 600, 1690);
-            m_protocols[m_count++] = new IRProtocol(IRProtocol::Yawl, 3400, 1650, 425, 425, 1250);
-            m_protocols[m_count++] = new IRProtocol(IRProtocol::Draftee, 6050, 7350, 550, 550, 1650, 7350, 0);
-            m_protocols[m_count++] = new IRProtocol(IRProtocol::Ampul, 4400, 4400, 500, 600, 1650, 0, 5450);
+            m_protocols[m_count++] = new IRProtocol(
+                IRProtocol::Junco, 9000, 4500, 560, 600, 1690
+                );
+
+            m_protocols[m_count++] = new IRProtocol(
+                IRProtocol::Yawl, 3400, 1650, 425, 425, 1250
+                );
+
+            m_protocols[m_count++] = new IRProtocol(
+                IRProtocol::Draftee, 6050, 7350, 550, 550, 1650, 7350, 0
+                );
+            
+            m_protocols[m_count++] = new IRProtocol(
+                IRProtocol::Ampul, 4400, 4400, 500, 600, 1650, 0, 5450
+                );
         }
 
         void First()        // from Iterator

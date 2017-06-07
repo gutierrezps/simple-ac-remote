@@ -23,6 +23,7 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
     uint8_t offset = 1;     // Skip initial space
     uint8_t nBits = 0;      // # of bits received (mark-space pairs)
     uint8_t rawLength = results->rawlen;
+    unsigned int rawValue = 0;
     unsigned char iData = 0;
 
     if(rawLength <= 4) return false;    // not sure if this could happen
@@ -48,34 +49,36 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
     for(uint8_t iBit = 0; iBit < nBits; iBit++)
     {
         iData = iBit / 8;
+        rawValue = results->rawbuf[offset];
 
         // initialize data array
         if(iBit % 8 == 0) irData.data[iData] = 0;
 
-        if(!MATCH_MARK(results->rawbuf[offset], protocol->BitMark()))
+        if(!MATCH_MARK(rawValue, protocol->BitMark()))
         {
             if(debug)
             {
                 Serial.print("mark mismatch - ");
-                Serial.println((unsigned long) results->rawbuf[offset]*USECPERTICK, DEC);
+                Serial.println((unsigned long) rawValue*USECPERTICK, DEC);
             }
             return false;
         }
 
         offset++;
+        rawValue = rawValue;
 
-        if(MATCH_SPACE(results->rawbuf[offset], protocol->BitOneSpace()))
+        if(MATCH_SPACE(rawValue, protocol->BitOneSpace()))
         {
             irData.data[iData] = (irData.data[iData] << 1) | 1;
         }
-        else if(MATCH_SPACE(results->rawbuf[offset], protocol->BitZeroSpace()))
+        else if(MATCH_SPACE(rawValue, protocol->BitZeroSpace()))
         {
             irData.data[iData] = (irData.data[iData] << 1);
         }
         else if(protocol->HasTrail() && (offset == rawLength - 2 || offset == rawLength - 1))
         {
-            if( ( offset == rawLength - 2 && !MATCH_SPACE(results->rawbuf[offset], protocol->TrailSpace()) )
-                || (offset == rawLength - 1 && !MATCH_MARK(results->rawbuf[offset], protocol->BitMark()))
+            if( ( offset == rawLength - 2 && !MATCH_SPACE(rawValue, protocol->TrailSpace()) )
+                || (offset == rawLength - 1 && !MATCH_MARK(rawValue, protocol->BitMark()))
                 )
             {
                 if(debug)
@@ -83,7 +86,7 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
                     Serial.print("trail mismatch - [");
                     Serial.print(offset);
                     Serial.print("]");
-                    Serial.println((unsigned long) results->rawbuf[offset]*USECPERTICK, DEC);
+                    Serial.println((unsigned long) rawValue*USECPERTICK, DEC);
                 }
                 return false;
             }
@@ -95,7 +98,7 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
                 Serial.print("space mismatch - [");
                 Serial.print(offset);
                 Serial.print("]");
-                Serial.println((unsigned long) results->rawbuf[offset]*USECPERTICK, DEC);
+                Serial.println((unsigned long) rawValue*USECPERTICK, DEC);
             }
             return false;
         }
