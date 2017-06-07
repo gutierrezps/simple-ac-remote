@@ -75,7 +75,7 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
         else if(protocol->HasTrail() && (offset == rawLength - 2 || offset == rawLength - 1))
         {
             if( ( offset == rawLength - 2 && !MATCH_SPACE(results->rawbuf[offset], protocol->TrailSpace()) )
-                || (offset == rawLength - 1 && !MATCH_MARK(results->rawbuf[offset], protocol->TrailMark()))
+                || (offset == rawLength - 1 && !MATCH_MARK(results->rawbuf[offset], protocol->BitMark()))
                 )
             {
                 if(debug)
@@ -85,6 +85,7 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
                     Serial.print("]");
                     Serial.println((unsigned long) results->rawbuf[offset]*USECPERTICK, DEC);
                 }
+                return false;
             }
         }
         else

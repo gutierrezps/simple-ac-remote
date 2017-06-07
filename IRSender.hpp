@@ -45,7 +45,7 @@ void sendIR(IRsend &irSender, IRData &irData)
     if(irData.protocol->HasTrail())
     {
         irSender.space(irData.protocol->TrailSpace());
-        irSender.mark(irData.protocol->TrailMark());
+        irSender.mark(irData.protocol->BitMark());
     }
     irSender.space(0);  // Always end with the LED off
 }

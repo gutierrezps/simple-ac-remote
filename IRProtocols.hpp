@@ -25,20 +25,24 @@ class IRProtocol
             Ampul
         };
 
-        IRProtocol(Id i, uint16_t hm, uint16_t hs, uint16_t bm, uint16_t b0s, uint16_t b1s, uint16_t ts, uint16_t tm)
+        IRProtocol(Id i, uint16_t headerMark, uint16_t headerSpace,
+                    uint16_t bitMark, uint16_t bitZeroSpace, uint16_t bitOneSpace,
+                    uint16_t trailSpace, uint16_t repeatSpace)
         {
             m_id = i;
-            m_headerMark = hm;
-            m_headerSpace = hs;
-            m_bitMark = bm;
-            m_bitZeroSpace = b0s;
-            m_bitOneSpace = b1s;
-            m_trailSpace = ts;
-            m_trailMark = tm;
+            m_headerMark = headerMark;
+            m_headerSpace = headerSpace;
+            m_bitMark = bitMark;
+            m_bitZeroSpace = bitZeroSpace;
+            m_bitOneSpace = bitOneSpace;
+            m_trailSpace = trailSpace;
+            m_repeatSpace = repeatSpace;
         }
 
-        IRProtocol(Id i, uint16_t hm, uint16_t hs, uint16_t bm, uint16_t b0s, uint16_t b1s)
-        : IRProtocol(i, hm, hs, bm, b0s, b1s, 0, 0) {};
+        IRProtocol(Id i, uint16_t headerMark, uint16_t headerSpace,
+                    uint16_t bitMark, uint16_t bitZeroSpace, uint16_t bitOneSpace)
+            : IRProtocol(i, headerMark, headerSpace,
+                            bitMark, bitZeroSpace, bitOneSpace, 0, 0) {};
 
         Id GetId() { return m_id; };
         uint16_t HeaderMark() { return m_headerMark; }
@@ -47,9 +51,8 @@ class IRProtocol
         uint16_t BitZeroSpace() { return m_bitZeroSpace; }
         uint16_t BitOneSpace() { return m_bitOneSpace; }
         uint16_t TrailSpace() { return m_trailSpace; }
-        uint16_t TrailMark() { return m_trailMark; }
 
-        bool HasTrail() { return m_trailMark > 0 && m_trailSpace > 0; }
+        bool HasTrail() { return m_trailSpace > 0; }
 
         String Name()
         {
@@ -71,7 +74,7 @@ class IRProtocol
         uint16_t m_bitZeroSpace;
         uint16_t m_bitOneSpace;
         uint16_t m_trailSpace;
-        uint16_t m_trailMark;
+        uint16_t m_repeatSpace;
 };
 
 
@@ -92,8 +95,8 @@ class IRProtocols : public Iterator<IRProtocol *>
 
             m_protocols[m_count++] = new IRProtocol(IRProtocol::Junco, 9000, 4500, 560, 600, 1690);
             m_protocols[m_count++] = new IRProtocol(IRProtocol::Yawl, 3400, 1650, 425, 425, 1250);
-            m_protocols[m_count++] = new IRProtocol(IRProtocol::Draftee, 6050, 7350, 550, 550, 1650, 7350, 550);
-            m_protocols[m_count++] = new IRProtocol(IRProtocol::Ampul, 4400, 4400, 500, 600, 1650);
+            m_protocols[m_count++] = new IRProtocol(IRProtocol::Draftee, 6050, 7350, 550, 550, 1650, 7350, 0);
+            m_protocols[m_count++] = new IRProtocol(IRProtocol::Ampul, 4400, 4400, 500, 600, 1650, 0, 5450);
         }
 
         void First()        // from Iterator
@@ -118,7 +121,7 @@ class IRProtocols : public Iterator<IRProtocol *>
 
 
         /**
-         * Find protocol by its id.
+         * Find protocol by itrailSpace id.
          * 
          * @param   id  to look for
          * 
