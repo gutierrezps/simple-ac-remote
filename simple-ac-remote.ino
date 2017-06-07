@@ -52,10 +52,18 @@ void setup()
 
     Serial.begin(115200);
 
-    //dumper();
+    // Enter dumper mode if level button is held on startup
+    if(digitalRead(g_pins.buttonLevel) == LOW)
+    {
+        digitalWrite(g_pins.ledBlink, HIGH);
+        delay(100);
+        while(digitalRead(g_pins.buttonOff) == LOW) delay(10);
+        digitalWrite(g_pins.ledBlink, LOW);
+        delay(100);
+        dumper();
+    }
 
-    // Enters programming routine if off button is
-    // held on startup
+    // Erase programming if off button is held on startup
     if(digitalRead(g_pins.buttonOff) == LOW)
     {
         digitalWrite(g_pins.ledBlink, HIGH);
