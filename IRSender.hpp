@@ -20,6 +20,23 @@ void sendIR(IRsend &irSender, IRData &irData)
 
     if(!irData.isValid || irData.protocol == NULL) return;
 
+    sendIRBlock(irSender, irData);
+
+    if(irData.protocol->IsRepeated())
+    {
+        irSender.space(irData.protocol->RepeatSpace());
+        sendIRBlock(irSender, irData);
+    }
+}
+
+/**
+ * Sends a single header and data block
+ * 
+ * @param irSender
+ * @param irData
+ */
+void sendIRBlock(IRsend &irSender, IRData &irData)
+{
     // Header
     irSender.mark(irData.protocol->HeaderMark());
     irSender.space(irData.protocol->HeaderSpace());
