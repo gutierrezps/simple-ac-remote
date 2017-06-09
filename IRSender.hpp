@@ -6,6 +6,9 @@
 #include "IRData.hpp"
 
 
+void sendIR(IRsend &irSender, IRData &irData);
+void sendIRBlock(IRsend &irSender, IRData &irData);
+
 /**
  * Sends infrared data with given IRsend. Based on sendNEC
  * function from IRremote library.
