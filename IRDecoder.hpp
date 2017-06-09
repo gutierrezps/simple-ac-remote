@@ -5,6 +5,38 @@
 #include "IRProtocols.hpp"
 #include "IRData.hpp"
 
+class IRDecoder
+{
+public:
+
+    enum Error : char
+    {
+        None = 0,
+        HeaderMismatch = 1,
+        DataOverflow,
+        MarkMismatch,
+        SpaceMismatch,
+        TrailMismatch,
+        NoRepeat
+    };
+
+    void errorToString(Error error)
+    {
+        switch(error)
+        {
+            case None:              return "none";
+            case HeaderMismatch:    return "header mismatch";
+            case DataOverflow:      return "data overflow";
+            case MarkMismatch:      return "mark mismatch";
+            case SpaceMismatch:     return "space mismatch";
+            case TrailMismatch:     return "trail mismatch";
+            case NoRepeat:          return "no repeat";
+            case Repeat:            return "no repeat";
+        }
+    }
+};
+
+
 /**
  * Tries to decode the raw data by ckecking its timings against
  * a certain protocol.
@@ -14,17 +46,22 @@
  * @param   results     obtained from IRremote library
  * @param   irData      destination data packet
  * @param   protocol
+ * @param   offset      initial offset on results' raw data
  * @param   debug       if 1, prints debug info
  * 
  * @return  true if raw data match given protocol
  */
-bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, char debug)
+bool tryDecodeIR(
+    decode_results *results, IRData &irData, IRProtocol *protocol,
+    uint8_t offset, char debug
+    )
 {
-    uint8_t offset = 1;     // Skip initial space
     uint8_t nBits = 0;      // # of bits received (mark-space pairs)
     uint8_t rawLength = results->rawlen;
     unsigned int rawValue = 0;
     unsigned char iData = 0;
+
+    if(offset == 0) offset = 1;
 
     if(rawLength <= 4) return false;    // not sure if this could happen
     
@@ -74,6 +111,10 @@ bool tryDecodeIR(decode_results *results, IRData &irData, IRProtocol *protocol, 
         else if(MATCH_SPACE(rawValue, protocol->BitZeroSpace()))
         {
             irData.data[iData] = (irData.data[iData] << 1);
+        }
+        else if(protocol->IsRepeated() && MATCH_SPACE(rawValue, protocol->RepeatSpace()))
+        {
+            // TODO
         }
         else if(protocol->HasTrail() && (offset == rawLength - 2 || offset == rawLength - 1))
         {
