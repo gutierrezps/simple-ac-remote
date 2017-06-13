@@ -17,11 +17,10 @@ public:
         DataOverflow,
         MarkMismatch,
         SpaceMismatch,
-        TrailMismatch,
-        RepeatSpace,
+        TrailMismatch
     };
 
-    static void errorToString(Error error)
+    static String errorToString(Error error)
     {
         switch(error)
         {
@@ -36,7 +35,7 @@ public:
     }
 
     static Error tryDecodeIR(decode_results *results, IRData &irData,
-                        IRProtocol *protocol, uint8_t *offset);
+                        IRProtocol *protocol);
 };
 
 
@@ -49,28 +48,27 @@ public:
  * @param   results     obtained from IRremote library
  * @param   irData      destination data packet
  * @param   protocol
- * @param   *offset     initial offset on results' raw data
+ * @param   offset     initial offset on results' raw data
  * 
  * @return  true if raw data match given protocol
  */
 IRDecoder::Error IRDecoder::tryDecodeIR(
-    decode_results *results, IRData &irData, IRProtocol *protocol,
-    uint8_t *offset
-    )
+    decode_results *results, IRData &irData, IRProtocol *protocol)
 {
     uint8_t nBits = 0;      // # of bits received (mark-space pairs)
     uint8_t rawLength = results->rawlen;
     unsigned int rawValue = 0;
-    unsigned char iData = 0;
-
-    if(*offset == 0) *offset = 1;
+    uint8_t iData = 0;
+    uint8_t iBit = 0;
+    unsigned int offset = 1;
+    char repeatReached = 0;         // used on protocols that repeat its packet
 
     // not sure if this could happen
     if(rawLength <= 4) return NotEnoughData;
     
     // checks initial mark and space - please notice offset++
-    if( !MATCH_MARK(results->rawbuf[*offset++], protocol->HeaderMark())
-        || !MATCH_SPACE(results->rawbuf[*offset++], protocol->HeaderSpace())
+    if( !MATCH_MARK(results->rawbuf[offset++], protocol->HeaderMark())
+        || !MATCH_SPACE(results->rawbuf[offset++], protocol->HeaderSpace())
         )
     {
         return HeaderMismatch;
@@ -84,10 +82,10 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
     }
 
     // tries to decode each bit
-    for(uint8_t iBit = 0; iBit < nBits; iBit++)
+    for(iBit = 0; iBit < nBits; iBit++)
     {
         iData = iBit / 8;
-        rawValue = results->rawbuf[*offset];
+        rawValue = results->rawbuf[offset];
 
         // initialize data array
         if(iBit % 8 == 0) irData.data[iData] = 0;
@@ -97,8 +95,8 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
             return MarkMismatch;
         }
 
-        *offset++;
-        rawValue = results->rawbuf[*offset];
+        offset++;
+        rawValue = results->rawbuf[offset];
 
         if(MATCH_SPACE(rawValue, protocol->BitOneSpace()))
         {
@@ -110,12 +108,13 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
         }
         else if(protocol->IsRepeated() && MATCH_SPACE(rawValue, protocol->RepeatSpace()))
         {
+            repeatReached = 1;
             break;
         }
-        else if(protocol->HasTrail() && (*offset == rawLength - 2 || *offset == rawLength - 1))
+        else if(protocol->HasTrail() && (offset == rawLength - 2 || offset == rawLength - 1))
         {
-            if( ( *offset == rawLength - 2 && !MATCH_SPACE(rawValue, protocol->TrailSpace()) )
-                || (*offset == rawLength - 1 && !MATCH_MARK(rawValue, protocol->BitMark()))
+            if( ( offset == rawLength - 2 && !MATCH_SPACE(rawValue, protocol->TrailSpace()) )
+                || (offset == rawLength - 1 && !MATCH_MARK(rawValue, protocol->BitMark()))
                 )
             {
                 return TrailMismatch;
@@ -126,10 +125,16 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
             return SpaceMismatch;
         }
 
-        *offset++;
+        offset++;
     }
 
-    // aligns left last bits on last data byte
+    // If there is a repeat, nBits calculated previously is wrong.
+    // Here we update it to the real value, i.e. the number of 
+    // bits processed so far, before reaching repeat space.
+    // Therefore, data is made of those first bits decoded.
+    if(repeatReached) nBits = iBit;
+
+    // Align left last bits on last data byte
     if(nBits % 8 > 0)
     {
         irData.data[(int)nBits/8] <<= 8 - (nBits % 8);
@@ -138,11 +143,6 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
     irData.nBits = nBits;
     irData.protocol = protocol;
     irData.isValid = true;
-
-    if(protocol->IsRepeated() && MATCH_SPACE(rawValue, protocol->RepeatSpace()))
-    {
-        return RepeatSpace;
-    }
 
     return None;
 }
@@ -163,7 +163,7 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
 bool decodeIR(decode_results *results, IRData &data, char debug)
 {
     IRProtocol *protocol = nullptr;
-    uint8_t offset = 0;
+    IRDecoder::Error error = IRDecoder::None;
 
     data.isValid = false;
 
@@ -181,13 +181,16 @@ bool decodeIR(decode_results *results, IRData &data, char debug)
             Serial.print(": ");
         }
 
-        offset = 0;
-        IRDecoder::tryDecodeIR(results, data, protocol, &offset);
+        error = IRDecoder::tryDecodeIR(results, data, protocol);
 
-        if(data.isValid)
+        if(error == IRDecoder::None)
         {
             if(debug) Serial.println("MATCH");
             break;
+        }
+        else
+        {
+            if(debug) Serial.println(IRDecoder::errorToString(error));
         }
 
         g_irProtocols.Next();
