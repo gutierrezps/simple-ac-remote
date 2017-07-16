@@ -49,6 +49,7 @@ The following changes were made on IRremote library:
 * [Cooking hacks IR Remote shield](https://www.cooking-hacks.com/documentation/tutorials/control-hvac-infrared-devices-from-the-internet-with-ir-remote/)
 * [VS1838B IR receiver module](http://arduino-kit.ru/userfiles/image/VS1838B_INFRARED_RECEIVER_MODULE.pdf)
 * [VS1838B datasheet](https://www.optimusdigital.ro/index.php?controller=attachment&id_attachment=4&usg=afqjcnh7fun0zdtnznv0ufaeth9sjdsgtg&sig2=t1sm5ow3vxetkff9hq2tsw)
+* [Random word generator](http://watchout4snakes.com/wo4snakes/Random/RandomWordPlus) : used as protocol name generator (uncommon nouns mode)
 
 
 ## Copyright
