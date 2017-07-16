@@ -100,13 +100,13 @@ class IRProtocols : public Iterator<IRProtocol *>
                 );
 
             m_protocols[m_count++] = new IRProtocol(
-                IRProtocol::Yawl, 3400, 1650, 425, 425, 1250
+                IRProtocol::Yawl, 3400, 1650, 425, 475, 1250
                 );
 
             m_protocols[m_count++] = new IRProtocol(
                 IRProtocol::Draftee, 6050, 7350, 550, 550, 1650, 7350, 0
                 );
-            
+
             m_protocols[m_count++] = new IRProtocol(
                 IRProtocol::Ampul, 4400, 4400, 500, 600, 1650, 0, 5450
                 );
@@ -135,9 +135,9 @@ class IRProtocols : public Iterator<IRProtocol *>
 
         /**
          * Find protocol by itrailSpace id.
-         * 
+         *
          * @param   id  to look for
-         * 
+         *
          * @return  null if not found
          */
         IRProtocol * GetProtocol(IRProtocol::Id id)
