@@ -20,6 +20,8 @@ public:
         TrailMismatch
     };
 
+    static uint8_t lastOffset;
+
     static String errorToString(Error error)
     {
         switch(error)
@@ -38,18 +40,19 @@ public:
                         IRProtocol *protocol);
 };
 
+uint8_t IRDecoder::lastOffset = 1; // defines the static member variable
+
 
 /**
  * Tries to decode the raw data by ckecking its timings against
  * a certain protocol.
  *
  * @see     IRProtocol class
- * 
+ *
  * @param   results     obtained from IRremote library
  * @param   irData      destination data packet
  * @param   protocol
- * @param   offset     initial offset on results' raw data
- * 
+ *
  * @return  true if raw data match given protocol
  */
 IRDecoder::Error IRDecoder::tryDecodeIR(
@@ -60,15 +63,16 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
     unsigned int rawValue = 0;
     uint8_t iData = 0;
     uint8_t iBit = 0;
-    unsigned int offset = 1;
     char repeatReached = 0;         // used on protocols that repeat its packet
+
+    lastOffset = 1;
 
     // not sure if this could happen
     if(rawLength <= 4) return NotEnoughData;
-    
-    // checks initial mark and space - please notice offset++
-    if( !MATCH_MARK(results->rawbuf[offset++], protocol->HeaderMark())
-        || !MATCH_SPACE(results->rawbuf[offset++], protocol->HeaderSpace())
+
+    // checks initial mark and space - please notice lastOffset++
+    if( !MATCH_MARK(results->rawbuf[lastOffset++], protocol->HeaderMark())
+        || !MATCH_SPACE(results->rawbuf[lastOffset++], protocol->HeaderSpace())
         )
     {
         return HeaderMismatch;
@@ -85,7 +89,7 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
     for(iBit = 0; iBit < nBits; iBit++)
     {
         iData = iBit / 8;
-        rawValue = results->rawbuf[offset];
+        rawValue = results->rawbuf[lastOffset];
 
         // initialize data array
         if(iBit % 8 == 0) irData.data[iData] = 0;
@@ -95,8 +99,8 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
             return MarkMismatch;
         }
 
-        offset++;
-        rawValue = results->rawbuf[offset];
+        lastOffset++;
+        rawValue = results->rawbuf[lastOffset];
 
         if(MATCH_SPACE(rawValue, protocol->BitOneSpace()))
         {
@@ -111,10 +115,10 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
             repeatReached = 1;
             break;
         }
-        else if(protocol->HasTrail() && (offset == rawLength - 2 || offset == rawLength - 1))
+        else if(protocol->HasTrail() && (lastOffset == rawLength - 2 || lastOffset == rawLength - 1))
         {
-            if( ( offset == rawLength - 2 && !MATCH_SPACE(rawValue, protocol->TrailSpace()) )
-                || (offset == rawLength - 1 && !MATCH_MARK(rawValue, protocol->BitMark()))
+            if( ( lastOffset == rawLength - 2 && !MATCH_SPACE(rawValue, protocol->TrailSpace()) )
+                || (lastOffset == rawLength - 1 && !MATCH_MARK(rawValue, protocol->BitMark()))
                 )
             {
                 return TrailMismatch;
@@ -125,11 +129,11 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
             return SpaceMismatch;
         }
 
-        offset++;
+        lastOffset++;
     }
 
     // If there is a repeat, nBits calculated previously is wrong.
-    // Here we update it to the real value, i.e. the number of 
+    // Here we update it to the real value, i.e. the number of
     // bits processed so far, before reaching repeat space.
     // Therefore, data is made of those first bits decoded.
     if(repeatReached) nBits = iBit;
@@ -153,11 +157,11 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
  * available protocols.
  *
  * @see     IRProtocols class
- * 
+ *
  * @param   results     raw data
  * @param   data        destination data packet
  * @param   debug       if 1, prints debug info
- * 
+ *
  * @return  true if a matching protocol was found
  */
 bool decodeIR(decode_results *results, IRData &data, char debug)
@@ -190,7 +194,14 @@ bool decodeIR(decode_results *results, IRData &data, char debug)
         }
         else
         {
-            if(debug) Serial.println(IRDecoder::errorToString(error));
+            if(debug)
+            {
+                Serial.print(IRDecoder::errorToString(error));
+                Serial.print(" - [");
+                Serial.print(IRDecoder::lastOffset);
+                Serial.print("] ");
+                Serial.println((unsigned long) results->rawbuf[IRDecoder::lastOffset]*USECPERTICK, DEC);
+            }
         }
 
         g_irProtocols.Next();
@@ -202,7 +213,7 @@ bool decodeIR(decode_results *results, IRData &data, char debug)
 /**
  * Prints raw data on Serial. Based on IRrevcDump example from
  * IRremote library.
- * 
+ *
  * @param   results     raw data
  * @param   skip_lines  if 1, prints each timing on a new line
  */
