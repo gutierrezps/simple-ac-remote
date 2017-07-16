@@ -7,6 +7,37 @@
 
 #define MAX_DIFFERENT_VALUES 30
 
+char arrayInsert(unsigned int *target, unsigned int value, unsigned char lastFree,
+    unsigned char *related1, unsigned char *related2
+    )
+{
+    unsigned int temp = 0;
+
+    target[lastFree] = value;
+
+    if(lastFree == 0) return 0;
+
+    for(char i = lastFree - 1; i >= 0; i--)
+    {
+        if(target[i] <= target[i + 1]) return i + 1;
+
+        temp = target[i];
+        target[i] = target[i+1];
+        target[i+1] = temp;
+
+        temp = related1[i];
+        related1[i] = related1[i+1];
+        related1[i+1] = temp;
+
+        temp = related2[i];
+        related2[i] = related2[i+1];
+        related2[i+1] = temp;
+    }
+
+    return 0;
+}
+
+
 void analyze(decode_results *results)
 {
     uint8_t offset = 1;     // Skip initial space
@@ -41,7 +72,9 @@ void analyze(decode_results *results)
 
         if(i == occupied)
         {
-            values[i] = value;
+
+            //values[i] = value;
+            i = arrayInsert(values, value, i, count, polarity);
             count[i] = 1;
             polarity[i] = pol;
             occupied++;
