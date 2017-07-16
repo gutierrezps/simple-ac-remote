@@ -37,7 +37,7 @@ class IRData
          * First byte is nBits
          * Second byte is protocol ID
          * Next n bytes are data
-         * 
+         *
          * @param   address     starting address
          * @return  0 on failure
          */
@@ -58,7 +58,7 @@ class IRData
 
         /**
          * Reads the data packet from EEPROM.
-         * 
+         *
          * @param   address     starting position
          * @return  0 if incorrect size or unknown protocol
          */
@@ -106,6 +106,21 @@ class IRData
             }
             nBits = copyFrom.nBits;
             isValid = copyFrom.isValid;
+        }
+
+        void ToString()
+        {
+            Serial.print("Protocol ");
+            Serial.print(protocol->Name());
+            Serial.print(", ");
+            Serial.print(nBits);
+            Serial.print(" bits, <");
+            for(uint8_t i = 0; i < SizeOnEEPROM(); i++)
+            {
+                if(data[i] < 0x10) Serial.print('0');
+                Serial.print(data[i], HEX);
+            }
+            Serial.println('>');
         }
 };
 

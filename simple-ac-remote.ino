@@ -349,9 +349,10 @@ void dumper()
         analyze(&irRawData);
         decodeIR(&irRawData, data, 1);
 
-
         if(data.isValid)    // i.e. known protocol
         {
+            data.ToString();
+
             digitalWrite(g_pins.ledBlink, HIGH);
             delay(50);
             digitalWrite(g_pins.ledBlink, LOW);
