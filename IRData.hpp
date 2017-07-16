@@ -14,6 +14,7 @@ class IRData
         uint8_t data[IRDATA_MAX_VALUE_SIZE];
         uint8_t nBits;
         bool isValid;
+        bool isRepeated;
 
         IRData()
         {
@@ -47,10 +48,11 @@ class IRData
 
             EEPROM.write(address, nBits);
             EEPROM.write(address + 1, protocol->GetId());
+            EEPROM.write(address + 2, isRepeated);
 
             for(uint8_t i = 0; i < Length(); i++)
             {
-                EEPROM.write(address + 2 + i, data[i]);
+                EEPROM.write(address + 3 + i, data[i]);
             }
 
             return 1;
@@ -75,9 +77,11 @@ class IRData
 
             if(protocol == NULL) return 0;
 
+            isRepeated = EEPROM.read(address + 2);
+
             for(uint8_t i = 0; i < size; i++)
             {
-                data[i] = EEPROM.read(address + 2 + i);
+                data[i] = EEPROM.read(address + 3 + i);
             }
 
             isValid = true;
@@ -91,7 +95,7 @@ class IRData
          */
         char SizeOnEEPROM()
         {
-            return Length() + 2;
+            return Length() + 3;
         }
 
         /**
@@ -106,6 +110,7 @@ class IRData
             }
             nBits = copyFrom.nBits;
             isValid = copyFrom.isValid;
+            isRepeated = copyFrom.isRepeated;
         }
 
         void ToString()
@@ -115,12 +120,14 @@ class IRData
             Serial.print(", ");
             Serial.print(nBits);
             Serial.print(" bits, <");
-            for(uint8_t i = 0; i < SizeOnEEPROM(); i++)
+            for(uint8_t i = 0; i < Length(); i++)
             {
                 if(data[i] < 0x10) Serial.print('0');
                 Serial.print(data[i], HEX);
             }
-            Serial.println('>');
+            Serial.print("> ");
+            if(!isRepeated) Serial.print("no ");
+            Serial.println("repeat");
         }
 };
 

@@ -113,6 +113,7 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
         else if(protocol->IsRepeated() && MATCH_SPACE(rawValue, protocol->RepeatSpace()))
         {
             repeatReached = 1;
+            irData.isRepeated = true;
             break;
         }
         else if(protocol->HasTrail() && (lastOffset == rawLength - 2 || lastOffset == rawLength - 1))
@@ -137,6 +138,7 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
     // bits processed so far, before reaching repeat space.
     // Therefore, data is made of those first bits decoded.
     if(repeatReached) nBits = iBit;
+    else irData.isRepeated = false;
 
     // Align left last bits on last data byte
     if(nBits % 8 > 0)
