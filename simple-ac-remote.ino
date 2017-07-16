@@ -4,7 +4,7 @@
 // Copyright 2017 Gutierrez PS
 //
 // http://github.com/gutierrezps/simple-ac-remote
-//  
+//
 //******************************************************************************
 
 #include <IRremote.h>
@@ -25,7 +25,7 @@ const struct
     char ledBlink;
     char irSensor;
 }
-g_pins = {12, 11, 4, 5, 6, 7, 2};
+g_pins = {10, 11, 4, 5, 6, 7, 2};
 
 IRrecv g_irRecv(g_pins.irSensor);
 IRsend g_irSender;                  // IR LED connected on pin 3
@@ -117,7 +117,7 @@ void loop()
                 digitalWrite(g_pins.led1, HIGH);
                 break;
         }
-        
+
         for(char remote = 0; remote < g_remoteQty; ++remote)
         {
             digitalWrite(g_pins.ledBlink, HIGH);
@@ -126,7 +126,7 @@ void loop()
             digitalWrite(g_pins.ledBlink, LOW);
             delay(50);
         }
-        
+
         delay(400);
         g_sendCode = 0;
     }
@@ -188,7 +188,7 @@ void program()
 
             switch(currentCode)
             {
-                case 0: 
+                case 0:
                     digitalWrite(g_pins.led1, blinkStatus ? LOW : HIGH);
                     digitalWrite(g_pins.led2, blinkStatus ? HIGH : LOW);
                     digitalWrite(g_pins.led3, blinkStatus ? LOW : HIGH);
@@ -216,7 +216,7 @@ void program()
             }
 
             // IR data received
-            
+
             Serial.print("\ncode ");
             Serial.print(currentCode, DEC);
             Serial.print(": ");
@@ -264,7 +264,7 @@ void program()
         if(!saveOk) break;
     }
 
-    
+
     // blink level leds twice - end of programming
     for(char i = 0; i <= 4; i++)
     {
@@ -281,7 +281,7 @@ void program()
 
 /**
  * Load programmed codes from EEPROM.
- * 
+ *
  * byte on EEPROM[1] is the number of remotes programmed
  *
  * @see IRData::ReadFromEEPROM
@@ -348,7 +348,7 @@ void dumper()
         dumpRaw(&irRawData, 0);
         analyze(&irRawData);
         decodeIR(&irRawData, data, 1);
-        
+
 
         if(data.isValid)    // i.e. known protocol
         {
