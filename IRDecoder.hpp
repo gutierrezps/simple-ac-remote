@@ -20,7 +20,7 @@ public:
         TrailMismatch
     };
 
-    static uint8_t lastOffset;
+    static uint16_t lastOffset;
 
     static String errorToString(Error error)
     {
@@ -40,7 +40,7 @@ public:
                         IRProtocol *protocol);
 };
 
-uint8_t IRDecoder::lastOffset = 1; // defines the static member variable
+uint16_t IRDecoder::lastOffset = 1; // defines the static member variable
 
 
 /**
@@ -59,7 +59,7 @@ IRDecoder::Error IRDecoder::tryDecodeIR(
     decode_results *results, IRData &irData, IRProtocol *protocol)
 {
     uint8_t nBits = 0;      // # of bits received (mark-space pairs)
-    uint8_t rawLength = results->rawlen;
+    uint16_t rawLength = results->rawlen;
     unsigned int rawValue = 0;
     uint8_t iData = 0;
     uint8_t iBit = 0;

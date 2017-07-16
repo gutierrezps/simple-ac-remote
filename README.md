@@ -41,6 +41,7 @@ The following changes were made on IRremote library:
 
 * On file ``IRremoteInt.h``, change ``RAWBUF`` to ``300``, in order to capture bigger packets.
 * On file ``IRremoteInt.h``, change ``_GAP`` to ``10000``, in order to capture shorter headers and repeated data.
+* On file ``IRremoteInt.h`` struct ``irparams_t``, and also on file ``IRremote.h`` class ``decode_results``, change ``rawlen`` type to ``uint16_t``
 
 
 ## Resources and other projects
