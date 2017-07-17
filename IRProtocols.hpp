@@ -106,7 +106,7 @@ class IRProtocols : public Iterator<IRProtocol *>
                 );
 
             m_protocols[m_count++] = new IRProtocol(
-                IRProtocol::Draftee, 6050, 7350, 550, 550, 1650, 7350, 0
+                IRProtocol::Draftee, 6050, 7350, 550, 600, 1650, 7350, 0
                 );
 
             m_protocols[m_count++] = new IRProtocol(
