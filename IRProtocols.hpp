@@ -23,7 +23,8 @@ class IRProtocol
             Yawl,
             Draftee,
             Ampul,
-            Marl
+            Marl,
+            Pomander
         };
 
         IRProtocol(Id i, uint16_t headerMark, uint16_t headerSpace,
@@ -66,6 +67,7 @@ class IRProtocol
                 case Draftee:   return String(F("Draftee"));
                 case Ampul:     return String(F("Ampul"));
                 case Marl:      return String(F("Marl"));
+                case Pomander:  return String(F("Pomander"));
                 default:        return String(F("Unknown"));
             }
         }
@@ -115,6 +117,10 @@ class IRProtocols : public Iterator<IRProtocol *>
 
             m_protocols[m_count++] = new IRProtocol(
                 IRProtocol::Marl, 3100, 8900, 500, 550, 1550
+                );
+
+            m_protocols[m_count++] = new IRProtocol(
+                IRProtocol::Pomander, 8850, 4500, 550, 700, 1650
                 );
         }
 

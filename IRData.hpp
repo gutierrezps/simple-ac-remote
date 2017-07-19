@@ -71,11 +71,20 @@ class IRData
             nBits = EEPROM.read(address);
             uint8_t size = Length();
 
-            if(size == 0 || size > MaxSize()) return 0;
+            if(size == 0 || size > MaxSize())
+            {
+                Serial.println("size mismatch");
+                return 0;
+            }
 
             protocol = g_irProtocols.GetProtocol(EEPROM.read(address + 1));
 
-            if(protocol == NULL) return 0;
+            if(protocol == NULL)
+            {
+                Serial.print("protocol mismatch");
+                Serial.println(EEPROM.read(address + 1), DEC);
+                return 0;
+            }
 
             isRepeated = EEPROM.read(address + 2);
 
@@ -93,7 +102,7 @@ class IRData
          * @see     WriteToEEPROM
          * @return  number of bytes occupied on EEPROM
          */
-        char SizeOnEEPROM()
+        uint8_t SizeOnEEPROM()
         {
             return Length() + 3;
         }
@@ -119,7 +128,9 @@ class IRData
             Serial.print(protocol->Name());
             Serial.print(", ");
             Serial.print(nBits);
-            Serial.print(" bits, <");
+            Serial.print(" bits, ");
+            Serial.print(Length());
+            Serial.print(" bytes, <");
             for(uint8_t i = 0; i < Length(); i++)
             {
                 if(data[i] < 0x10) Serial.print('0');
