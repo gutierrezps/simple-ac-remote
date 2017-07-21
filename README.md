@@ -39,9 +39,12 @@ Once the decode process is done, the data bits are stored on Arduino's EEPROM me
 
 The following changes were made on IRremote library:
 
-* On file ``IRremoteInt.h``, change ``RAWBUF`` to ``300``, in order to capture bigger packets.
-* On file ``IRremoteInt.h``, change ``_GAP`` to ``10000``, in order to capture shorter headers and repeated data.
-* On file ``IRremoteInt.h`` struct ``irparams_t``, and also on file ``IRremote.h`` class ``decode_results``, change ``rawlen`` type to ``uint16_t``
+On file ``IRremoteInt.h``:
+* ``RAWBUF`` to ``300``, in order to capture bigger packets.
+* ``_GAP`` to ``10000``, in order to capture shorter headers and repeated data.
+* struct ``irparams_t``, and also on file ``IRremote.h`` class ``decode_results``, change ``rawlen`` type to ``uint16_t``
+* ``MARK_EXCESS`` to 0
+* ``TOLERANCE`` to 10
 
 
 ## Resources and other projects

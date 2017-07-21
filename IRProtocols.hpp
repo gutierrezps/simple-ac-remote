@@ -100,27 +100,27 @@ class IRProtocols : public Iterator<IRProtocol *>
             m_count = 0;     // from Iterator
 
             m_protocols[m_count++] = new IRProtocol(
-                IRProtocol::Junco, 9000, 4500, 560, 600, 1690
+                IRProtocol::Junco, 9000, 4500, 550, 550, 1650
                 );
 
             m_protocols[m_count++] = new IRProtocol(
-                IRProtocol::Yawl, 3400, 1650, 425, 475, 1250
+                IRProtocol::Yawl, 3350, 1700, 350, 450, 1300
                 );
 
             m_protocols[m_count++] = new IRProtocol(
-                IRProtocol::Draftee, 6050, 7350, 550, 600, 1650, 7350, 0
+                IRProtocol::Draftee, 6000, 7400, 450, 650, 1700, 7400, 0
                 );
 
             m_protocols[m_count++] = new IRProtocol(
-                IRProtocol::Ampul, 4400, 4400, 500, 600, 1650, 0, 5450
+                IRProtocol::Ampul, 4350, 4450, 450, 600, 1700, 0, 5450
                 );
 
             m_protocols[m_count++] = new IRProtocol(
-                IRProtocol::Marl, 3100, 8900, 500, 550, 1550
+                IRProtocol::Marl, 3100, 8900, 450, 550, 1600
                 );
 
             m_protocols[m_count++] = new IRProtocol(
-                IRProtocol::Pomander, 8850, 4500, 550, 700, 1650
+                IRProtocol::Pomander, 8850, 4500, 500, 700, 1650
                 );
         }
 
