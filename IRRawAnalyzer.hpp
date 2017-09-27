@@ -161,6 +161,8 @@ void dumpRaw(decode_results *results)
 
     Serial.println("");                    // Newline
     if(results->overflow) Serial.println("Overflow occurred");
+
+    Serial.println("============================================");
 }
 
 
