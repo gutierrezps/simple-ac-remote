@@ -76,8 +76,10 @@ void setup()
         delay(100);
     }
 
+    // First byte of EEPROM tells if the remote is programmed or not
     if(EEPROM.read(0) != 'p') program();
 
+    // Second byte of EEPROM tells how many remotes are programmed
     g_remoteQty = EEPROM.read(1);
 
     Serial.print("remoteQty ");
@@ -482,7 +484,7 @@ void dumper()
             continue;   // return to loop beginning
         }
 
-        dumpRaw(&irRawData, 0);
+        dumpRaw(&irRawData);
         analyze(&irRawData);
         decodeIR(&irRawData, data, 1);
 

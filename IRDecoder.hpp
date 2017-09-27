@@ -213,32 +213,44 @@ bool decodeIR(decode_results *results, IRData &data, char debug)
 }
 
 /**
- * Prints raw data on Serial. Based on IRrevcDump example from
- * IRremote library.
+ * Prints raw data on Serial. Based on IRrevcDumpV2
+ * example from IRremote library.
  *
  * @param   results     raw data
- * @param   skip_lines  if 1, prints each timing on a new line
  */
-void dumpRaw(decode_results *results, char skip_lines)
+void dumpRaw(decode_results *results)
 {
-    for(int i = 1; i < results->rawlen; i++) {
-        //Serial.print("[");
-        //Serial.print(i);
-        //Serial.print("]");
-        if (i & 1) {
-            Serial.print((unsigned long) results->rawbuf[i]*USECPERTICK, DEC);
-        }
-        else {
-            Serial.write('-');
-            Serial.print((unsigned long) results->rawbuf[i]*USECPERTICK, DEC);
-        }
-        Serial.print(" ");
-        if(skip_lines) Serial.println("");
+  // Print Raw data
+  Serial.print("Timing[");
+  Serial.print(results->rawlen-1, DEC);
+  Serial.println("]: ");
+
+  for (int i = 1;  i < results->rawlen;  i++)
+  {
+    unsigned long  x = results->rawbuf[i] * USECPERTICK;
+
+    if (!(i & 1))   // Even
+    {
+      Serial.print("-");
+      if (x < 1000)  Serial.print(" ") ;
+      if (x < 100)   Serial.print(" ") ;
+      Serial.print(x, DEC);
     }
-    if(results->overflow) Serial.print("\noverflow");
-    Serial.println("");
+    else            // Odd
+    {
+      Serial.print("     ");
+      Serial.print("+");
+      if (x < 1000)  Serial.print(" ") ;
+      if (x < 100)   Serial.print(" ") ;
+      Serial.print(x, DEC);
+      if (i < results->rawlen-1) Serial.print(", "); //',' not needed for last one
+    }
 
+    if (!(i % 8))  Serial.println("");
+  }
+
+  Serial.println("");                    // Newline
+  if(results->overflow) Serial.println("Overflow occurred");
 }
-
 
 #endif
