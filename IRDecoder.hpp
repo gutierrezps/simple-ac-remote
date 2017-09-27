@@ -212,45 +212,4 @@ bool decodeIR(decode_results *results, IRData &data, char debug)
     return data.isValid;
 }
 
-/**
- * Prints raw data on Serial. Based on IRrevcDumpV2
- * example from IRremote library.
- *
- * @param   results     raw data
- */
-void dumpRaw(decode_results *results)
-{
-  // Print Raw data
-  Serial.print("Timing[");
-  Serial.print(results->rawlen-1, DEC);
-  Serial.println("]: ");
-
-  for (int i = 1;  i < results->rawlen;  i++)
-  {
-    unsigned long  x = results->rawbuf[i] * USECPERTICK;
-
-    if (!(i & 1))   // Even
-    {
-      Serial.print("-");
-      if (x < 1000)  Serial.print(" ") ;
-      if (x < 100)   Serial.print(" ") ;
-      Serial.print(x, DEC);
-    }
-    else            // Odd
-    {
-      Serial.print("     ");
-      Serial.print("+");
-      if (x < 1000)  Serial.print(" ") ;
-      if (x < 100)   Serial.print(" ") ;
-      Serial.print(x, DEC);
-      if (i < results->rawlen-1) Serial.print(", "); //',' not needed for last one
-    }
-
-    if (!(i % 8))  Serial.println("");
-  }
-
-  Serial.println("");                    // Newline
-  if(results->overflow) Serial.println("Overflow occurred");
-}
-
 #endif
