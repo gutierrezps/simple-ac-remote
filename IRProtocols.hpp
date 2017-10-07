@@ -24,7 +24,8 @@ class IRProtocol
             Draftee,
             Ampul,
             Marl,
-            Pomander
+            Pomander,
+            NEC
         };
 
         IRProtocol(Id i, uint16_t headerMark, uint16_t headerSpace,
@@ -68,6 +69,7 @@ class IRProtocol
                 case Ampul:     return String(F("Ampul"));
                 case Marl:      return String(F("Marl"));
                 case Pomander:  return String(F("Pomander"));
+                case NEC:       return String(F("NEC"));
                 default:        return String(F("Unknown"));
             }
         }
@@ -121,6 +123,10 @@ class IRProtocols : public Iterator<IRProtocol *>
 
             m_protocols[m_count++] = new IRProtocol(
                 IRProtocol::Pomander, 8850, 4500, 500, 700, 1650
+                );
+
+            m_protocols[m_count++] = new IRProtocol(
+                IRProtocol::NEC, 4400, 4400, 500, 600, 1700
                 );
         }
 
