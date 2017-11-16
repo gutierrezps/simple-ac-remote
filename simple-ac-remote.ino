@@ -54,6 +54,7 @@ void setup()
 
     Serial.begin(115200);
 
+    /*
     // Enter dumper mode if level button is held on startup
     if(digitalRead(g_pins.buttonLevel) == LOW)
     {
@@ -64,20 +65,28 @@ void setup()
         delay(100);
         dumper();
     }
+    */
 
-    // Erase programming if off button is held on startup
-    if(digitalRead(g_pins.buttonOff) == LOW)
+    // Erase programming if both buttons are held on startup
+    // Or if the remote is not programmed
+    if( ( digitalRead(g_pins.buttonOff) == LOW
+            && digitalRead(g_pins.buttonLevel) == LOW
+        ) || EEPROM.read(0) != 'p')
     {
         digitalWrite(g_pins.ledBlink, HIGH);
-        EEPROM.write(0, 0);
         delay(100);
-        while(digitalRead(g_pins.buttonOff) == LOW) delay(10);
+        while(digitalRead(g_pins.buttonOff) == LOW
+                || digitalRead(g_pins.buttonLevel) == LOW)
+        {
+            delay(10);
+        }
         digitalWrite(g_pins.ledBlink, LOW);
         delay(100);
+
+        program();
     }
 
-    // First byte of EEPROM tells if the remote is programmed or not
-    if(EEPROM.read(0) != 'p') program();
+    digitalWrite(g_pins.ledBlink, HIGH);
 
     // Second byte of EEPROM tells how many remotes are programmed
     g_remoteQty = EEPROM.read(1);
@@ -319,7 +328,9 @@ void program()
 
     } while(error);
 
-    EEPROM.write(dataAddr, g_remoteQty);
+    EEPROM.write(0, 0);     // remotes programmed previously are now invalid
+
+    EEPROM.write(1, g_remoteQty);
 
     // After the number of remotes, stored on EEPROM[1], follows
     // the 16-bit address to each code of each remote.
@@ -531,10 +542,10 @@ void sendCode(char code)
 
         if(!success) return;
 
-        digitalWrite(g_pins.ledBlink, HIGH);
+        digitalWrite(g_pins.ledBlink, LOW);
         sendIR(g_irSender, irData);
         delay(50);
-        digitalWrite(g_pins.ledBlink, LOW);
+        digitalWrite(g_pins.ledBlink, HIGH);
         delay(50);
     }
 }

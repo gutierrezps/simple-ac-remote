@@ -152,7 +152,7 @@ class IRProtocols : public Iterator<IRProtocol *>
 
 
         /**
-         * Find protocol by itrailSpace id.
+         * Find protocol by its id.
          *
          * @param   id  to look for
          *
