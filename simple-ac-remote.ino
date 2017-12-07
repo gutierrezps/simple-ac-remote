@@ -17,17 +17,21 @@
 #include "IRSender.hpp"
 #include "IRRawAnalyzer.hpp"
 
+#define DUMPER_ENABLED 0
+
 const struct
 {
     char buttonLevel;
     char buttonOff;
+    char buttonProjPower;
+    char buttonProjMute;
     char led1;
     char led2;
     char led3;
     char ledBlink;
     char irSensor;
 }
-g_pins = {10, 11, 4, 5, 6, 7, 2};
+g_pins = {10, 11, 12, 9, 4, 5, 6, 7, 2};
 
 IRrecv g_irRecv(g_pins.irSensor);
 IRsend g_irSender;                  // IR LED connected on pin 3
@@ -51,10 +55,12 @@ void setup()
     pinMode(g_pins.ledBlink, OUTPUT);
     pinMode(g_pins.buttonOff, INPUT_PULLUP);
     pinMode(g_pins.buttonLevel, INPUT_PULLUP);
+    pinMode(g_pins.buttonProjPower, INPUT_PULLUP);
+    pinMode(g_pins.buttonProjMute, INPUT_PULLUP);
 
     Serial.begin(115200);
 
-    /*
+#if DUMPER_ENABLED
     // Enter dumper mode if level button is held on startup
     if(digitalRead(g_pins.buttonLevel) == LOW)
     {
@@ -65,7 +71,7 @@ void setup()
         delay(100);
         dumper();
     }
-    */
+#endif
 
     // Erase programming if both buttons are held on startup
     // Or if the remote is not programmed
