@@ -39,12 +39,15 @@ IRsend g_irSender;                  // IR LED connected on pin 3
 uint8_t g_ACLevel = 0;              // 0: off, 1-3: cooling level
 bool g_sendCode = false;
 uint8_t g_remoteQty = 1;
+uint8_t g_hasProjector = 0;
+uint8_t g_projectorStatus = 0;      // 0: normal, 1: freeze, 2: mute
 
 #define MAX_REMOTE_QTY  10
 
 void program();
 void dumper();
 void sendCode(char code);
+void sendProjector(char code);
 
 void setup()
 {
@@ -60,9 +63,9 @@ void setup()
 
     Serial.begin(115200);
 
-#if DUMPER_ENABLED
+    #if DUMPER_ENABLED
     // Enter dumper mode if level button is held on startup
-    if(digitalRead(g_pins.buttonLevel) == LOW)
+    if(digitalRead(g_pins.buttonLevel) == LOW && digitalRead(g_pins.buttonOff) == HIGH)
     {
         digitalWrite(g_pins.ledBlink, HIGH);
         delay(100);
@@ -71,7 +74,7 @@ void setup()
         delay(100);
         dumper();
     }
-#endif
+    #endif
 
     // Erase programming if both buttons are held on startup
     // Or if the remote is not programmed
@@ -124,6 +127,24 @@ void loop()
         while(digitalRead(g_pins.buttonOff) == LOW) delay(1);
         g_ACLevel = 0;
         g_sendCode = 1;
+    }
+
+    if(digitalRead(g_pins.buttonProjPower) == LOW)
+    {
+        delay(100);
+        while(digitalRead(g_pins.buttonProjPower) == LOW) delay(1);
+        Serial.println(F("sending proj power"));
+        sendProjector(0);
+        delay(400);
+    }
+
+    if(digitalRead(g_pins.buttonProjMute) == LOW)
+    {
+        delay(100);
+        while(digitalRead(g_pins.buttonProjMute) == LOW) delay(1);
+        Serial.println(F("sending proj mute/freeze"));
+        sendProjector(1);
+        delay(400);
     }
 
     if(g_sendCode)
@@ -287,6 +308,8 @@ String nextArg(String &args)
  * Program remote control.
  *
  * First input is the number of remote controls, written on EEPROM[1].
+ * 
+ * Next is a flag for the presence of a projector remote control, written on EEPROM[2].
  *
  * For each remote, 4 codes are read:
  *     - 0 is to turn off
@@ -298,14 +321,14 @@ String nextArg(String &args)
  *     - protocol id (int)
  *     - repeat: 1 if code is sent twice, and if the protocol supports it
  *
- * Each code is packed on an IRData object, that is written to EEPROM.
+ * Each code is packed on an IRData object and written to EEPROM.
  *
  * Storage on EEPROM is made of two parts: the IRData address on EEPROM (dataAddr),
  * and the IRData itself. pointerAddr points to the EEPROM addr where dataAddr
  * value is stored. dataAddr's of each code are stored after the g_remoteQty,
  * in sequence for each remote, following the rule:
  * 
- *     pointerAddr = 2 + code * 2 + remote * 8;
+ *     pointerAddr = 3 + code * 2 + remote * 8;
  *                   |          |            |
  *                   |          |            +-- 4 codes per remote * 2 bytes address
  *                   |          +-- 2 bytes address
@@ -322,10 +345,10 @@ void program()
     signed char remote, code;
     bool error = false, success = false;
     uint8_t answer;
-    uint16_t dataAddr = 1, pointerAddr = 2;
+    uint16_t dataAddr = 0, pointerAddr = 3;
     String next, args;
 
-    Serial.print("remote qty: ");
+    Serial.print(F("remote qty: "));
     do
     {
         g_remoteQty = readInt(false);
@@ -334,30 +357,41 @@ void program()
 
     } while(error);
 
+    Serial.print(F("projector? "));
+    g_hasProjector = readInt(true);
+    Serial.println(g_hasProjector ? " yes" : " no");
+
     EEPROM.write(0, 0);     // remotes programmed previously are now invalid
 
     EEPROM.write(1, g_remoteQty);
+    EEPROM.write(2, g_hasProjector);
 
-    // After the number of remotes, stored on EEPROM[1], follows
+    // After the number of remotes, stored on EEPROM[1], and after
+    // the projector flag on EEPROM[2] (hence the +3 at the end) follows
     // the 16-bit address to each code of each remote.
     // So, EEPROM[2-3] stores the addr of remote 1, code 0,
     // EEPROM[4-5] stores remote 1, code 1, and so on.
-    // The +1 at the end is to point to the next free address,
-    // that will be the first byte of remote 1, code 0
-    dataAddr += 8 * g_remoteQty + 1;
+    // The +6 is for the projector remote addresses (power, freeze, mute)
+    dataAddr += 8 * g_remoteQty +3 +6;
 
-    for(remote = 0; remote < g_remoteQty; remote++)
+    char maxRemote = g_remoteQty;
+    if(g_hasProjector) maxRemote++;
+
+    for(remote = 0; remote < maxRemote; remote++)
     {
-        for(code = 0; code < 4; code++)
+        char maxCode = 4;
+        if(g_hasProjector && remote == g_remoteQty) maxCode = 3;
+
+        for(code = 0; code < maxCode; code++)
         {
-            Serial.println("\n========================================");
-            Serial.print("remote ");
+            Serial.println(F("\n========================================"));
+            Serial.print(F("remote "));
             Serial.print(remote);
-            Serial.print(", code ");
+            Serial.print(F(", code "));
             Serial.print(code);
-            Serial.print(" - pointerAddr ");
+            Serial.print(F(" - pointerAddr "));
             Serial.print(pointerAddr);
-            Serial.print(", dataAddr ");
+            Serial.print(F(", dataAddr "));
             Serial.println(dataAddr);
 
             while(!Serial.available()) delay(1);
@@ -365,12 +399,15 @@ void program()
             String args = Serial.readStringUntil('\n');
             args.replace("\r", "");
             args.trim();
-            Serial.println(args);
+            Serial.print("\"");
+            Serial.print(args);
+            Serial.println("\"");
 
             next = nextArg(args);
+
             if(!next.length())
             {
-                Serial.println("invalid sequence");
+                Serial.println(F("invalid sequence 1"));
                 code -= 1;
                 continue;
             }
@@ -378,7 +415,7 @@ void program()
             data.nBits = next.toInt();
             if(data.nBits == 0)
             {
-                Serial.println("invalid n bits");
+                Serial.println(F("invalid n bits"));
                 code -= 1;
                 continue;
             }
@@ -386,7 +423,7 @@ void program()
             next = nextArg(args);
             if(!next.length())
             {
-                Serial.println("invalid sequence");
+                Serial.println(F("invalid sequence 2"));
                 code -= 1;
                 continue;
             }
@@ -394,7 +431,7 @@ void program()
             success = hexStringToArray(next, data.data, data.Length());
             if(!success)
             {
-                Serial.println("invalid data");
+                Serial.println(F("invalid data"));
                 code -= 1;
                 continue;
             }
@@ -402,7 +439,7 @@ void program()
             next = nextArg(args);
             if(!next.length())
             {
-                Serial.println("invalid sequence");
+                Serial.println(F("invalid sequence 3"));
                 code -= 1;
                 continue;
             }
@@ -411,7 +448,7 @@ void program()
             error = data.protocol == NULL;
             if(error)
             {
-                Serial.println("invalid protocol");
+                Serial.println(F("invalid protocol"));
                 code -= 1;
                 continue;
             }
@@ -419,14 +456,14 @@ void program()
             next = nextArg(args);
             if(!next.length())
             {
-                Serial.println("invalid sequence");
+                Serial.println(F("invalid sequence 4"));
                 code -= 1;
                 continue;
             }
 
             data.isRepeated = next.toInt() > 0;
 
-            Serial.print("Result:  ");
+            Serial.print(F("Result:  "));
             data.ToString();
 
             data.isValid = true;
@@ -435,7 +472,7 @@ void program()
 
             if(!success)
             {
-                Serial.println("error while saving to eeprom");
+                Serial.println(F("error while saving to eeprom"));
                 return;
             }
 
@@ -443,7 +480,7 @@ void program()
 
             if(!success)
             {
-                Serial.println("error while saving to eeprom");
+                Serial.println(F("error while saving to eeprom"));
                 return;
             }
             data.ToString();
@@ -541,7 +578,7 @@ void sendCode(char code)
 
     for(remote = 0; remote < g_remoteQty; remote++)
     {
-        pointerAddr = 2 + code * 2 + remote * 8;
+        pointerAddr = 3 + code * 2 + remote * 8;
         eeprom_read_block((void*)&dataAddr, (void*)pointerAddr, sizeof(pointerAddr));
 
         success = irData.ReadFromEEPROM(dataAddr);
@@ -554,4 +591,31 @@ void sendCode(char code)
         digitalWrite(g_pins.ledBlink, HIGH);
         delay(50);
     }
+}
+
+void sendProjector(char code)
+{
+    IRData irData;
+    uint16_t pointerAddr, dataAddr;
+    char success;
+
+    pointerAddr = 3 + g_remoteQty * 8;      // power
+    if(code != 0)
+    {
+        if(++g_projectorStatus == 3) g_projectorStatus = 0;
+
+        if(g_projectorStatus == 1) pointerAddr += 2;    // freeze
+        else pointerAddr += 4;                          // mute (and unmute)
+    }
+    
+    eeprom_read_block((void*)&dataAddr, (void*)pointerAddr, sizeof(pointerAddr));
+    success = irData.ReadFromEEPROM(dataAddr);
+
+    if(!success) return;
+
+    digitalWrite(g_pins.ledBlink, LOW);
+    sendIR(g_irSender, irData);
+    delay(50);
+    digitalWrite(g_pins.ledBlink, HIGH);
+    delay(50);
 }
