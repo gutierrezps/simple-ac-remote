@@ -139,6 +139,18 @@ class IRData
             Serial.print("> ");
             if(!isRepeated) Serial.print("no ");
             Serial.println("repeat");
+
+            Serial.print(nBits);
+            Serial.print(' ');
+            for(uint8_t i = 0; i < Length(); i++)
+            {
+                if(data[i] < 0x10) Serial.print('0');
+                Serial.print(data[i], HEX);
+            }
+            Serial.print(' ');
+            Serial.print(protocol->GetId());
+            Serial.print(' ');
+            Serial.println(isRepeated ? '1':'0');
         }
 };
 

@@ -17,7 +17,7 @@
 #include "IRSender.hpp"
 #include "IRRawAnalyzer.hpp"
 
-#define DUMPER_ENABLED 0
+#define DUMPER_ENABLED 1
 
 const struct
 {
