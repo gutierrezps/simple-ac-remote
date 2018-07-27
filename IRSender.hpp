@@ -5,7 +5,6 @@
 #include "IRProtocols.hpp"
 #include "IRData.hpp"
 
-
 void sendIR(IRsend &irSender, IRData &irData);
 void sendIRBlock(IRsend &irSender, IRData &irData);
 
@@ -18,14 +17,15 @@ void sendIRBlock(IRsend &irSender, IRData &irData);
  */
 void sendIR(IRsend &irSender, IRData &irData)
 {
-    // Set IR carrier frequency
+    // Set IR carrier frequency (38 kHz)
     irSender.enableIROut(38);
 
-    if(!irData.isValid || irData.protocol == NULL) return;
+    if (!irData.isValid || irData.protocol == NULL)
+        return;
 
     sendIRBlock(irSender, irData);
 
-    if(irData.protocol->IsRepeated())
+    if (irData.isRepeated)
     {
         irSender.space(irData.protocol->RepeatSpace());
         sendIRBlock(irSender, irData);
@@ -44,13 +44,25 @@ void sendIRBlock(IRsend &irSender, IRData &irData)
     irSender.mark(irData.protocol->HeaderMark());
     irSender.space(irData.protocol->HeaderSpace());
 
-    for(uint8_t iBit = 0; iBit < irData.nBits; iBit++)
+    uint8_t currentBit = 0;     // bit to be sent
+    uint8_t currentByte = 0;    // byte where the currentBit is located
+    uint8_t mask = 0;           // binary mask to extract currentBit from currentByte
+
+    for (uint8_t bitIndex = 0; bitIndex < irData.nBits; bitIndex++)
     {
         // Same for both bit values
         irSender.mark(irData.protocol->BitMark());
 
-        // Sends MSb first
-        if( irData.data[(int)iBit/8] & ( 1 << (7 - (iBit % 8)) ) )
+        currentByte = irData.data[(int) bitIndex/8];
+
+        // bits are sent from MSB to LSB, i.e. given the same byte,
+        // the first bit is selected using the mask 0b10000000,
+        // and the last bit is selected using the mask 0b00000001
+        mask = 1 << (7 - (bitIndex % 8));
+
+        currentBit = currentByte & mask;
+
+        if (currentBit)
         {
             irSender.space(irData.protocol->BitOneSpace());
         }
@@ -62,12 +74,15 @@ void sendIRBlock(IRsend &irSender, IRData &irData)
 
     // Last mark
     irSender.mark(irData.protocol->BitMark());
-    if(irData.protocol->HasTrail())
+
+    if (irData.protocol->HasTrail())
     {
         irSender.space(irData.protocol->TrailSpace());
         irSender.mark(irData.protocol->BitMark());
     }
-    irSender.space(0);  // Always end with the LED off
+
+    // turn LED off
+    irSender.space(0);
 }
 
 #endif
