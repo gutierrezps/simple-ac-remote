@@ -77,7 +77,7 @@ class IRData
                 return 0;
             }
 
-            protocol = g_irProtocols.GetProtocol(EEPROM.read(address + 1));
+            protocol = g_irProtocols.GetProtocol((IRProtocol::Id) EEPROM.read(address + 1));
 
             if(protocol == NULL)
             {
